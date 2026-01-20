@@ -1,31 +1,13 @@
-# 碳排放管理系统 （carbon_emission_system）
-读研期间作为项目组长接手的本校系统开发项目，麻雀虽小，五脏俱全。
-![1月20日](https://github.com/user-attachments/assets/8fd112cb-5e25-4976-bd5c-c0ba9b2cd8db)
+<div align="right" style="margin-bottom: 20px;">
+  <strong>Language / 语言:</strong>
+  <a href="#chinese-version">中文</a> | 
+  <a href="#english-version">English</a>
+</div>
 
-<div>
-  <!-- 语言切换按钮 -->
-  <div align="right" style="margin-bottom: 20px;">
-    <input type="radio" id="lang-zh" name="language" checked style="display: none;">
-    <input type="radio" id="lang-en" name="language" style="display: none;">
-    <label for="lang-zh" style="cursor: pointer; margin-right: 10px; padding: 5px 15px; border: 1px solid #0366d6; border-radius: 3px; background: #0366d6; color: white; font-weight: bold;">中文</label>
-    <label for="lang-en" style="cursor: pointer; padding: 5px 15px; border: 1px solid #ddd; border-radius: 3px; background: #f5f5f5; color: #333;">English</label>
-  </div>
+---
 
-  <style>
-    /* 默认显示中文，隐藏英文 */
-    .lang-en { display: none !important; }
-    .lang-zh { display: block !important; }
-    
-    /* 当选择英文时，显示英文，隐藏中文 */
-    #lang-en:checked ~ * .lang-zh { display: none !important; }
-    #lang-en:checked ~ * .lang-en { display: block !important; }
-    
-    /* 当选择中文时，显示中文，隐藏英文 */
-    #lang-zh:checked ~ * .lang-zh { display: block !important; }
-    #lang-zh:checked ~ * .lang-en { display: none !important; }
-  </style>
-
-<div class="lang-zh">
+<a name="chinese-version"></a>
+## 🇨🇳 中文版 / Chinese Version
 
 # 碳排放管理系统
 
@@ -393,9 +375,10 @@ carbon_emission_system/
 
 项目很轻量，主要是提供平台，欢迎提交 Issue 和 Pull Request 以此为基，添加你觉得能有价值的功能点，展示技术实力，一起成为本项目的开源贡献者。
 
-</div>
+---
 
-<div class="lang-en">
+<a name="english-version"></a>
+## 🇬🇧 English Version / 英文版
 
 # Carbon Emission Management System
 
@@ -766,7 +749,3 @@ This project is licensed under the [LICENSE](LICENSE) license.
 ## 🙏 Closing Words
 
 The project is lightweight and mainly provides a platform. We welcome Issue submissions and Pull Requests. Based on this foundation, add features you think would be valuable, showcase your technical skills, and become an open source contributor to this project together.
-
-</div>
-
-</div>
