@@ -1,0 +1,361 @@
+/* Element UI 森林系主题覆盖 */
+
+/* ==================== 按钮主题 ==================== */
+.el-button--primary {
+  background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
+  border-color: #4a7c3a;
+  color: white;
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background: linear-gradient(135deg, #6b9f5a 0%, #4a7c3a 100%);
+  border-color: #6b9f5a;
+}
+
+.el-button--success {
+  background-color: #52c41a;
+  border-color: #52c41a;
+}
+
+.el-button--success:hover,
+.el-button--success:focus {
+  background-color: #73d13d;
+  border-color: #73d13d;
+}
+
+/* ==================== 卡片主题 ==================== */
+.el-card {
+  border: 1px solid #c8e0c0;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(45, 80, 22, 0.1);
+}
+
+.el-card__header {
+  background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+  font-weight: 600;
+}
+
+/* ==================== 表格主题 ==================== */
+.el-table {
+  border: 1px solid #c8e0c0;
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+.el-table .el-table__header-wrapper,
+.el-table .el-table__body-wrapper {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.el-table .el-table__header,
+.el-table .el-table__body {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+.el-table th.el-table__cell,
+.el-table td.el-table__cell {
+  box-sizing: border-box;
+  padding: 12px 8px;
+}
+
+.table_container {
+  overflow-x: hidden !important;
+}
+
+.el-table.forest-table {
+  table-layout: fixed !important;
+}
+
+.el-table.forest-table .el-table__header-wrapper,
+.el-table.forest-table .el-table__body-wrapper {
+  width: 100% !important;
+}
+
+.el-table.forest-table .el-table__header,
+.el-table.forest-table .el-table__body {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.el-table.forest-table .el-table__header th,
+.el-table.forest-table .el-table__header th.el-table__cell {
+  background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%) !important;
+  background-color: #4a7c3a !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  border-right: 1px solid #e0ede8 !important;
+  border-bottom: 1px solid #e0ede8 !important;
+  padding: 12px 8px !important;
+  text-align: center !important;
+  display: table-cell !important;
+  visibility: visible !important;
+  height: 50px !important;
+  line-height: normal !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 1 !important;
+  box-sizing: border-box !important;
+}
+
+.el-table.forest-table .el-table__body td.el-table__cell {
+  border-right: 1px solid #e0ede8;
+  border-bottom: 1px solid #e0ede8;
+  padding: 12px 8px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.el-table.forest-table .el-table__body td.el-table__cell .cell {
+  text-align: center !important;
+}
+
+/* 树状表格样式修复 - 第一列左对齐 */
+.el-table.forest-table .el-table__body tr[class*="el-table__row--level"] td:first-child {
+  text-align: left !important;
+}
+
+.el-table.forest-table .el-table__body tr[class*="el-table__row--level"] td:first-child .cell {
+  text-align: left !important;
+}
+
+/* 树状表格样式修复 */
+.el-table.forest-table .el-table__body tr.el-table__row--level-1 td:first-child .cell,
+.el-table.forest-table .el-table__body tr.el-table__row--level-2 td:first-child .cell,
+.el-table.forest-table .el-table__body tr.el-table__row--level-3 td:first-child .cell {
+  text-align: left !important;
+}
+
+/* 非树状表格第一列居中 */
+.el-table.forest-table .el-table__body tr:not([class*="el-table__row--level"]) td:first-child {
+  text-align: center !important;
+}
+
+.el-table.forest-table .el-table__body tr:not([class*="el-table__row--level"]) td:first-child .cell {
+  text-align: center !important;
+}
+
+.el-table.forest-table .el-table__expand-icon {
+  color: #666;
+  display: inline-block !important;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.el-table.forest-table .el-table__expand-icon:hover {
+  color: #4CAF50;
+}
+
+.el-table.forest-table .el-table__expand-icon.el-table__expand-icon--expanded {
+  transform: rotate(90deg);
+}
+
+.el-table.forest-table .el-table__row--level-1 td:first-child {
+  padding-left: 24px !important;
+}
+
+.el-table.forest-table .el-table__row--level-2 td:first-child {
+  padding-left: 48px !important;
+}
+
+.el-table.forest-table .el-table__row--level-3 td:first-child {
+  padding-left: 72px !important;
+}
+
+.el-table.forest-table .el-table__body tr:not([class*="el-table__row--level"]) td:first-child {
+  padding-left: 12px !important;
+}
+
+.el-table.forest-table .el-table__body tr:hover>td {
+  background-color: #e8f5e3 !important;
+}
+
+.el-table.forest-table col {
+  box-sizing: border-box;
+}
+
+.el-table.forest-table .el-table__header col,
+.el-table.forest-table .el-table__body col {
+  box-sizing: border-box;
+}
+
+.el-table.forest-table .el-table__header th .cell,
+.el-table.forest-table .el-table__body td .cell {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.el-table.forest-table .el-table__header th .cell {
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* .el-table.forest-table .el-table__header th .cell * {
+  color: white !important;
+} */
+
+.el-table tbody tr:hover {
+  background: #e8f5e3;
+}
+
+.el-table tbody td {
+  border-bottom: 1px solid #e0ede8;
+  border-right: 1px solid #e0ede8;
+  color: #1a3d0d;
+}
+
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before {
+  background-color: #c8e0c0;
+}
+
+.el-table--border .el-table__cell {
+  border-right: 1px solid #e0ede8;
+}
+
+/* ==================== 输入框主题 ==================== */
+.el-input__inner {
+  border-color: #c8e0c0;
+  color: #1a3d0d;
+}
+
+.el-input__inner:focus {
+  border-color: #6b9f5a;
+}
+
+.el-select .el-input__inner:focus {
+  border-color: #6b9f5a;
+}
+
+.el-date-editor.el-input__inner {
+  border-color: #c8e0c0;
+}
+
+.el-date-editor.el-input__inner:focus {
+  border-color: #6b9f5a;
+}
+
+/* ==================== 标签主题 ==================== */
+.el-tag {
+  background-color: #e8f5e3;
+  border-color: #c8e0c0;
+  color: #2d5016;
+}
+
+.el-tag--success {
+  background-color: #f6ffed;
+  border-color: #b7eb8f;
+  color: #389e0d;
+}
+
+/* ==================== 面包屑主题 ==================== */
+.el-breadcrumb__inner {
+  color: #4a7c3a;
+}
+
+.el-breadcrumb__inner.is-link {
+  color: #6b9f5a;
+}
+
+.el-breadcrumb__inner.is-link:hover {
+  color: #2d5016;
+}
+
+/* ==================== 分页主题 ==================== */
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background-color: #4a7c3a;
+  color: white;
+}
+
+.el-pagination.is-background .el-pager li:not(.disabled):hover {
+  color: #4a7c3a;
+}
+
+/* ==================== 对话框主题 ==================== */
+.el-dialog {
+  border-radius: 12px;
+  border: 1px solid #c8e0c0;
+}
+
+.el-dialog__header {
+  background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+}
+
+.el-dialog__title {
+  color: white;
+  font-weight: 600;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+  color: white;
+}
+
+/* ==================== 表单主题 ==================== */
+.el-form-item__label {
+  color: #2d5016;
+  font-weight: 600;
+}
+
+/* ==================== 描述列表主题 ==================== */
+.el-descriptions__label {
+  color: #4a7c3a;
+  font-weight: 600;
+}
+
+.el-descriptions__content {
+  color: #1a3d0d;
+}
+
+/* ==================== 消息提示主题 ==================== */
+.el-message--success {
+  background-color: #f6ffed;
+  border-color: #b7eb8f;
+  color: #389e0d;
+}
+
+.el-message--warning {
+  background-color: #fffbe6;
+  border-color: #ffe58f;
+  color: #d46b08;
+}
+
+.el-message--error {
+  background-color: #fff2f0;
+  border-color: #ffccc7;
+  color: #cf1322;
+}
+
+/* ==================== 主容器样式 ==================== */
+.main-box-admin {
+  margin: 20px auto 0;
+  background-color: #f0f7ed;
+  min-height: calc(100vh - 80px);
+  padding: 5px; /* 从3%减少到5px，减少页面顶部间距 */
+}
+
+.main-box-carbon {
+  background-color: #f0f7ed;
+  min-height: calc(100vh - 80px);
+  padding: 20px;
+}
