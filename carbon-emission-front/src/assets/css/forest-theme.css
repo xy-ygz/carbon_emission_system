@@ -1,0 +1,219 @@
+/* 森林系绿色主题样式 */
+
+/* ==================== 主题色彩定义 ==================== */
+:root {
+  /* 主色调 - 森林绿色系 */
+  --forest-primary: #2d5016;        /* 深森林绿 */
+  --forest-secondary: #4a7c3a;      /* 中森林绿 */
+  --forest-light: #6b9f5a;          /* 浅森林绿 */
+  --forest-lighter: #8fc47e;        /* 更浅的绿色 */
+  --forest-lightest: #b8d9a8;       /* 最浅的绿色 */
+  
+  /* 辅助色 */
+  --forest-accent: #5a8c4a;         /* 强调色 */
+  --forest-success: #52c41a;        /* 成功色 */
+  --forest-warning: #faad14;        /* 警告色 */
+  --forest-error: #ff4d4f;          /* 错误色 */
+  
+  /* 背景色 */
+  --forest-bg-primary: #f0f7ed;     /* 主背景 - 淡绿色 */
+  --forest-bg-secondary: #ffffff;   /* 次背景 - 白色 */
+  --forest-bg-card: #ffffff;        /* 卡片背景 */
+  --forest-bg-hover: #e8f5e3;       /* 悬停背景 */
+  
+  /* 文字颜色 */
+  --forest-text-primary: #1a3d0d;   /* 主文字 - 深绿色 */
+  --forest-text-secondary: #4a7c3a; /* 次文字 */
+  --forest-text-light: #6b9f5a;     /* 浅文字 */
+  --forest-text-disabled: #a0c99a;  /* 禁用文字 */
+  
+  /* 边框颜色 */
+  --forest-border: #c8e0c0;         /* 边框色 */
+  --forest-border-light: #e0ede8;   /* 浅边框 */
+  
+  /* 阴影 */
+  --forest-shadow-sm: 0 2px 8px rgba(45, 80, 22, 0.08);
+  --forest-shadow-md: 0 4px 16px rgba(45, 80, 22, 0.12);
+  --forest-shadow-lg: 0 8px 24px rgba(45, 80, 22, 0.16);
+  
+  /* 渐变 */
+  --forest-gradient-primary: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
+  --forest-gradient-light: linear-gradient(135deg, #6b9f5a 0%, #4a7c3a 100%);
+  --forest-gradient-card: linear-gradient(135deg, #f0f7ed 0%, #ffffff 100%);
+}
+
+/* ==================== 全局样式重置 ==================== */
+* {
+  box-sizing: border-box;
+}
+
+/* ==================== 卡片样式 ==================== */
+.forest-card {
+  background: var(--forest-bg-card);
+  border-radius: 12px;
+  box-shadow: var(--forest-shadow-sm);
+  border: 1px solid var(--forest-border-light);
+  transition: all 0.3s ease;
+}
+
+.forest-card:hover {
+  box-shadow: var(--forest-shadow-md);
+}
+
+.forest-card-header {
+  background: var(--forest-gradient-primary);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.forest-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.forest-card-header i {
+  font-size: 20px;
+}
+
+.forest-card-body {
+  padding: 24px;
+}
+
+/* ==================== 按钮样式 ==================== */
+.forest-btn-primary {
+  background: var(--forest-gradient-primary);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.forest-btn-primary:hover {
+  background: var(--forest-gradient-light);
+  box-shadow: var(--forest-shadow-md);
+}
+
+.forest-btn-secondary {
+  background: var(--forest-bg-secondary);
+  border: 1px solid var(--forest-border);
+  color: var(--forest-text-primary);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.forest-btn-secondary:hover {
+  background: var(--forest-bg-hover);
+  border-color: var(--forest-light);
+}
+
+/* ==================== 输入框样式 ==================== */
+.forest-input {
+  border: 1px solid var(--forest-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--forest-text-primary);
+  transition: all 0.3s ease;
+}
+
+.forest-input:focus {
+  border-color: var(--forest-light);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(107, 159, 90, 0.1);
+}
+
+/* ==================== 原生表格样式（非 Element UI） ==================== */
+.forest-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.forest-table thead {
+  background: var(--forest-gradient-primary) !important;
+  color: white !important;
+}
+
+.forest-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: white !important;
+  background: transparent !important;
+}
+
+.forest-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--forest-border-light);
+}
+
+.forest-table tbody tr:hover {
+  background: var(--forest-bg-hover);
+}
+
+/* ==================== 标签样式 ==================== */
+.forest-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  background: var(--forest-lightest);
+  color: var(--forest-text-primary);
+  border: 1px solid var(--forest-border);
+}
+
+/* ==================== 图标样式 ==================== */
+.forest-icon {
+  color: var(--forest-secondary);
+  font-size: 18px;
+}
+
+/* ==================== 统计卡片 ==================== */
+.forest-stat-card {
+  background: var(--forest-gradient-card);
+  border-radius: 12px;
+  padding: 24px;
+  border-left: 4px solid var(--forest-light);
+  box-shadow: var(--forest-shadow-sm);
+}
+
+.forest-stat-card .stat-label {
+  font-size: 14px;
+  color: var(--forest-text-secondary);
+  margin-bottom: 8px;
+}
+
+.forest-stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--forest-text-primary);
+}
+
+/* ==================== 图表容器 ==================== */
+.forest-chart-container {
+  background: var(--forest-bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--forest-shadow-sm);
+  border: 1px solid var(--forest-border-light);
+}
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 1200px) {
+  .forest-card {
+    margin-bottom: 20px;
+  }
+}

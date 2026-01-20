@@ -1,0 +1,104 @@
+services:
+  # 前端服务
+  frontend:
+    image: nginx:1.20-alpine
+    container_name: carbon-frontend
+    restart: always
+    ports:
+      - "4432:8080"
+    networks:
+      - carbon-network
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/default.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend/dist:/usr/share/nginx/html
+    environment:
+      TZ: Asia/Shanghai
+
+  # 后端服务
+  backend:
+    image: tomcat:9.0-jdk8-openjdk
+    container_name: carbon-backend
+    restart: always
+    ports:
+      - "12306:8080"
+    networks:
+      - carbon-network
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sys_carbon?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      # 字体文件路径环境变量（容器内路径，用于PDF导出，代码会优先从此路径读取字体文件）
+      FONT_DIR: /app/fonts
+    volumes:
+      # 将war包挂载为api.war，Tomcat会部署到/api路径
+      - ./backend/sys_carbon-0.0.1-SNAPSHOT.war:/usr/local/tomcat/webapps/api.war
+      # 绑定字体文件目录（相对路径，只读）,供PDF导出使用
+      - ./backend/fonts:/app/fonts:ro
+    # 确保Tomcat启动后正确部署
+    command: >
+      bash -c "rm -rf /usr/local/tomcat/webapps/ROOT && rm -rf /usr/local/tomcat/webapps/api && catalina.sh run"
+
+  # Redis服务（用于限流和缓存）
+  redis:
+    image: redis:7
+    container_name: carbon-redis
+    restart: always
+    ports:
+      - "4439:6379"
+    networks:
+      - carbon-network
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass 123456
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: carbon-mysql
+    restart: always
+    ports:
+      - "4436:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: sys_carbon # 容器启动时会自动创建该数据库
+      TZ: Asia/Shanghai
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    volumes:
+      # 容器启动时，会自动执行 /docker-entrypoint-initdb.d/ 目录下的 SQL 文件
+      - ../carbon-emission-backend/src/main/resources/sql/:/docker-entrypoint-initdb.d
+      # MySQL 数据持久化
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --lower_case_table_names=1
+      - --init-connect='SET NAMES utf8mb4'
+    networks:
+      - carbon-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  carbon-network:
+    driver: bridge
+
+

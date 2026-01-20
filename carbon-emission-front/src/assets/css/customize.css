@@ -1,0 +1,187 @@
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: #409EFF;
+  text-decoration: none;
+}
+
+i {
+  margin-right: 5px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+pre {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.list {
+  line-height: 1;
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.list:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.el-header {
+  line-height: 60px;
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, .1);
+}
+
+.el-container {
+  min-height: 100vh;
+}
+
+.el-footer {
+  padding: 20px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
+}
+
+.el-aside > .el-menu {
+  height: 100%;
+}
+
+.el-menu .el-scrollbar__wrap {
+  overflow-x: hidden;
+}
+
+.el-icon-success {
+  color: #67C23A;
+}
+
+.el-icon-warning {
+  color: #E6A23C;
+}
+
+.el-icon-error {
+  color: #f56c6c;
+}
+
+.el-row > a > i {
+  margin-left: 20px;;
+}
+
+.el-row > a {
+  color: #303133;
+}
+
+.el-row > a:hover {
+  color: #409EFF;
+}
+
+.el-dropdown-link {
+  font-size: 20px;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.flex-start {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.float-left {
+  float: left;
+}
+
+.float-right {
+  /* float: right; */
+}
+
+.text-small {
+  font-size: 16px;
+}
+
+.text-medium {
+  font-size: 20px;
+}
+
+.text-large {
+  font-size: 24px;
+}
+
+.text-icon {
+  margin-right: 10px;
+}
+
+.mt-1 {
+  margin-top: 10px;
+}
+
+.mt-2 {
+  margin-top: 20px;
+}
+
+.mb-1 {
+  margin-bottom: 10px;
+}
+
+.mb-2 {
+  margin-bottom: 20px;
+}
+
+.ml-1 {
+  margin-left: 10px;
+}
+
+.ml-2 {
+  margin-left: 20px;
+}
+
+.mr-1 {
+  margin-right: 10px;
+}
+
+.mr-2 {
+  margin-right: 20px;
+}
+
+.button-long {
+  width: 100%;
+}
+
+
+.box-middle {
+  margin: 10vh auto;
+}
+
+.card-title {
+  font-weight: 600;
+  text-align: center;
+  font-size: 18px;
+}
+
+.pagination {
+  margin-top: 15px;
+  text-align: center;
+}

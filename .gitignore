@@ -1,0 +1,34 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build outputs
+carbon-emission-backend/target/
+carbon-emission-front/dist/
+carbon-emission-front/node_modules/
+carbon-emission-front/.cache/
+
+# Docker
+docker/backend/*.war
+docker/frontend/dist/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Environment variables
+.env
+.env.local

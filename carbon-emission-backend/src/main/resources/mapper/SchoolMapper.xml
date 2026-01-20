@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bjfu.carbon.mapper.SchoolMapper">
+
+    <resultMap id="BaseResultMap" type="com.bjfu.carbon.domain.School">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="schoolName" column="school_name" jdbcType="VARCHAR"/>
+            <result property="totalNumber" column="total_number" jdbcType="BIGINT"/>
+            <result property="studentNumber" column="student_number" jdbcType="INTEGER"/>
+            <result property="teacherNumber" column="teacher_number" jdbcType="INTEGER"/>
+            <result property="greenArea" column="green_area" jdbcType="BIGINT"/>
+            <result property="buildingArea" column="building_area" jdbcType="BIGINT"/>
+            <result property="totalArea" column="total_area" jdbcType="BIGINT"/>
+            <result property="imageUrl" column="image_url" jdbcType="VARCHAR"/>
+            <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
+            <result property="modifiedTime" column="modified_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,school_name,total_number,
+        student_number,teacher_number,green_area,
+        building_area,total_area,image_url,created_time,
+        modified_time
+    </sql>
+    <sql id="selectTotalPeople">
+
+    </sql>
+    <select id="selectTotalPeople" resultType="java.lang.Long">
+        select total_number from sys_carbon.school
+        <where>
+            <if test="schoolName!=null and schoolName!=''">
+                school_name=#{schoolName}
+            </if>
+        </where>
+    </select>
+</mapper>

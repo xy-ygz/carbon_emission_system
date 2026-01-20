@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d3f35e64-4cdc-40c1-b1ad-5515bc1f8de2" name="Changes" comment="Reconstruction v1.1">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/ExportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/ExportStrategyFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/ImportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/ImportStrategyFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/impl/CsvImportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/impl/ExcelImportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/impl/PdfExportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/strategy/impl/WordExportStrategy.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/utils/CsvUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/fonts/SimSun.ttf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/CarbonApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/CarbonApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/common/ResultUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/common/ResultUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/CarbonEmissionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/CarbonEmissionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/ExchangeSettingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/ExchangeSettingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/PermissionManageController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/PermissionManageController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/PlaceInfoController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/PlaceInfoController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/RoleManageController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/RoleManageController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/SchoolController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/SchoolController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/UserManageController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/controller/UserManageController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/service/CarbonEmissionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/service/CarbonEmissionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/service/impl/CarbonEmissionServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/service/impl/CarbonEmissionServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/utils/XWPFUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bjfu/carbon/utils/XWPFUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/ReportTemplate.docx" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/ReportTemplate.docx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application-prod.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/mapper/CarbonEmissionMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mapper/CarbonEmissionMapper.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="customMavenHome" value="$USER_HOME$/Downloads/apache-maven-3.8.9" />
+        <option name="localRepository" value="$USER_HOME$/Downloads/maven-repo" />
+        <option name="mavenHomeTypeForPersistence" value="CUSTOM" />
+        <option name="useMavenConfig" value="false" />
+        <option name="userSettingsFile" value="$USER_HOME$/Downloads/apache-maven-3.8.9/conf/settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="MavenRunner">
+    <option name="skipTests" value="true" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="37q3tVXRKuD41UAjIziAMldz5o1" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.CarbonApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.sys_carbon [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.sys_carbon [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.sys_carbon [package].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/geyun/IdeaProjects/carbon-emission-backend/src/main/resources/fonts&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2724138&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;File.Encoding&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources/fonts" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="CarbonApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.bjfu.carbon.CarbonApplication" />
+      <module name="sys_carbon" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.bjfu.carbon.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="carbon-emission-backend" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.CarbonApplication" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="d3f35e64-4cdc-40c1-b1ad-5515bc1f8de2" name="Changes" comment="" />
+      <created>1750652615764</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1750652615764</updated>
+      <workItem from="1750652620614" duration="50000" />
+    </task>
+    <task id="LOCAL-00001" summary="Reconstruction v1.0">
+      <option name="closed" value="true" />
+      <created>1767617452736</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1767617452736</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Reconstruction v1.1">
+      <option name="closed" value="true" />
+      <created>1768559454167</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1768559454167</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Reconstruction v1.0" />
+    <MESSAGE value="Reconstruction v1.1" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reconstruction v1.1" />
+  </component>
+</project>
