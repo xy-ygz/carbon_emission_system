@@ -1,0 +1,100 @@
+spring:
+  main:
+    allow-circular-references: true
+  application:
+    name: user-center-backend
+  # 禁用Spring Boot DevTools自动重启（如果存在）
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+  # DataSource Config
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://101.201.81.51:4436/sys_carbon?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
+    username: root
+    password: 123456
+  # Redis配置（用于限流和缓存）
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: 123456
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+  # session 失效时间
+  session:
+    timeout: 86400
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+# JVM 内存和GC 配置
+java:
+  opts: "-Xms512m -Xmx1024m -XX:+UseG1GC"
+
+# 禁用热部署相关功能
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    shutdown:
+      enabled: false
+
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+mybatis-plus:
+#  configuration:
+#    map-underscore-to-camel-case: false   # mp 会自动将实体类属性转成驼峰拼到sql语句中，而我们当前库不需要，所以关闭
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+
+# 碳排放相关配置
+carbon:
+  # 年份回退配置，当指定年份没有数据时，最多回退的年份数
+  fallback-years: 3
+
+# JWT配置
+jwt:
+  # JWT签名密钥
+  secret: carbon-emission-secret-key-this-is-a-very-long-secret-key-for-jwt-token-generation
+  # Access Token过期时间（30分钟，单位：毫秒）
+  expiration: 1800000
+  # Refresh Token过期时间（1天，单位：毫秒）
+  refresh:
+    expiration: 86400000
+
+# 日志配置
+logging:
+  level:
+    # 抑制POI库关于word/目录条目的警告
+    org.apache.poi.openxml4j.opc.ZipPackage: ERROR
+    org.apache.poi.openxml4j.opc.PackagePartName: ERROR
+    # 降低docx4j相关日志级别（性能优化：减少日志输出开销）
+    org.docx4j.fonts: ERROR
+    org.docx4j.fonts.fop.fonts.autodetect: ERROR
+    org.docx4j.fonts.PhysicalFonts: ERROR
+    org.docx4j.fonts.BestMatchingMapper: ERROR
+    org.docx4j.utils: WARN
+    org.docx4j.Docx4jProperties: WARN
+    org.docx4j.jaxb: WARN
+    org.docx4j.XmlUtils: WARN
+    org.docx4j.openpackaging: WARN
+    org.docx4j.convert: WARN
+    org.apache.fop.apps.FOUserAgent: WARN
+
