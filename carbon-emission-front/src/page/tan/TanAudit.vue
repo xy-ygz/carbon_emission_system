@@ -390,7 +390,8 @@ export default {
           }
           // console.log(res.data.total);
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       }).catch((error) => {
         // 检查是否是40101错误（已在request.js中处理）
@@ -447,7 +448,8 @@ export default {
           }
           // console.log(res.data.total);
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       })
     },

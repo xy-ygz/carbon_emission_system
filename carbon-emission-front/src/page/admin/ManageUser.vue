@@ -270,7 +270,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取角色列表失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取角色列表失败！");
           }
         }
       }).catch((error) => {
@@ -296,7 +297,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取当前用户角色失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取当前用户角色失败！");
           }
         }
       }).catch((error) => {
@@ -352,7 +354,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取用户列表失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取用户列表失败！");
           }
           return Promise.reject(res); // 返回失败的结果
         }
@@ -462,7 +465,8 @@ export default {
               this.getUserList()
               this.addShow = false
             } else {
-              this.$message.error(res.data.message || "新增失败！")
+              // 优先显示description，如果没有则显示message
+              this.$message.error(res.data.description || res.data.message || "新增失败！")
             }
           }).catch(() => {
             this.$message.error("新增失败！")
@@ -491,7 +495,8 @@ export default {
               this.getUserList()
               this.updateShow = false
             } else {
-              this.$message.error(res.data.message || "修改失败！")
+              // 优先显示description，如果没有则显示message
+              this.$message.error(res.data.description || res.data.message || "修改失败！")
             }
           }).catch(() => {
             this.$message.error("修改失败！")
@@ -517,7 +522,8 @@ export default {
           this.getUserList()
           this.assignRoleShow = false
         } else {
-          this.$message.error(res.data.message || "分配失败！")
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "分配失败！")
         }
       }).catch(() => {
         this.$message.error("分配失败！")
@@ -533,7 +539,8 @@ export default {
           if (res.data.code == 200) {
             this.$message.success("密码已重置为123456！")
           } else {
-            this.$message.error(res.data.message || "重置失败！")
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "重置失败！")
           }
         }).catch(() => {
           this.$message.error("重置失败！")
@@ -556,7 +563,8 @@ export default {
             this.$message.success("删除成功！")
             this.getUserList()
           } else {
-            this.$message.error(res.data.message || "删除失败！")
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "删除失败！")
           }
         }).catch(() => {
           this.$message.error("删除失败！")

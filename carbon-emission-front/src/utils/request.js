@@ -80,7 +80,8 @@ service.interceptors.response.use(
       
       if (res.code === 40100 && !isLoginRequest) {
         // 非登录接口的40100错误，走token过期处理
-        handleTokenExpired(res.message || '未登录或Token已过期，请重新登录');
+        // 优先显示description，如果没有则显示message
+        handleTokenExpired(res.description || res.message || '未登录或Token已过期，请重新登录');
       } else if (res.code === 40100 && isLoginRequest) {
         // 登录接口的40100错误，直接显示错误信息
         const errorMsg = res.description || res.message || '登录失败';
@@ -116,7 +117,8 @@ service.interceptors.response.use(
         await handleTokenExpired('未登录或Token已过期，请重新登录');
       } else if (res && typeof res === 'object' && res.code === 40100 && !isLoginRequest) {
         // 非登录接口的40100错误，走token过期处理
-        await handleTokenExpired(res.message || '未登录或Token已过期，请重新登录');
+        // 优先显示description，如果没有则显示message
+        await handleTokenExpired(res.description || res.message || '未登录或Token已过期，请重新登录');
       } else if (res && typeof res === 'object' && res.code === 40100 && isLoginRequest) {
         // 登录接口的40100错误，直接显示错误信息
         const errorMsg = res.description || res.message || '登录失败';

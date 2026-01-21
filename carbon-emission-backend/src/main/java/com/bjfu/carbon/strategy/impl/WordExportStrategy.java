@@ -137,7 +137,7 @@ public class WordExportStrategy implements ExportStrategy {
             () -> carbonEmissionService.selectEmiAndConsume(year), exportDataExecutor);
         
         // 1.3 异步任务3：获取表3和图2数据（对应前端getTableData3 -> getCarbonMulberry -> getMulberryData）
-        CompletableFuture<Result> mulberryResultFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<Result<Map<String, Object>>> mulberryResultFuture = CompletableFuture.supplyAsync(
             () -> carbonEmissionService.getMulberryData(year, null), exportDataExecutor);
         
         // 1.4 异步任务4：获取图5和图6数据（对应前端getChart6 -> getDuijizhuCategory -> getEmissionCategoryData）
@@ -175,7 +175,7 @@ public class WordExportStrategy implements ExportStrategy {
         }
         
         // 3.3 获取桑基图数据（用于填充表3和图2）
-        Result<?> mulberryResult = mulberryResultFuture.join();
+        Result<Map<String, Object>> mulberryResult = mulberryResultFuture.join();
         
         // 3.4 获取堆叠图数据（用于图5和图6）
         List<CarbonEmission> carbonEmissions = carbonEmissionsFuture.join();

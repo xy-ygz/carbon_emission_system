@@ -103,21 +103,30 @@ public class RateLimitAspect {
         try {
             // 获取当前计数
             String countStr = stringRedisTemplate.opsForValue().get(key);
-            int count = countStr == null ? 0 : Integer.parseInt(countStr);
             
-            // 如果超过限制，返回false
+            // 如果key不存在（已过期），说明时间窗口已过，重置计数
+            if (countStr == null) {
+                stringRedisTemplate.opsForValue().set(key, "1", timeWindow, TimeUnit.SECONDS);
+                return true;
+            }
+            
+            int count = Integer.parseInt(countStr);
+            
+            // 如果超过限制，检查key是否已过期
             if (count >= limit) {
+                // 检查key的剩余过期时间，如果已过期（返回-2）或不存在（返回-1），重置计数
+                Long expire = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
+                if (expire == null || expire <= 0) {
+                    // key已过期或不存在，重置计数
+                    stringRedisTemplate.opsForValue().set(key, "1", timeWindow, TimeUnit.SECONDS);
+                    return true;
+                }
+                // key存在且未过期，但已达到限制
                 return false;
             }
             
             // 增加计数
-            if (count == 0) {
-                // 第一次访问，设置过期时间
-                stringRedisTemplate.opsForValue().set(key, "1", timeWindow, TimeUnit.SECONDS);
-            } else {
-                // 增加计数，不更新过期时间
-                stringRedisTemplate.opsForValue().increment(key);
-            }
+            stringRedisTemplate.opsForValue().increment(key);
             
             return true;
         } catch (Exception e) {

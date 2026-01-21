@@ -195,7 +195,8 @@ export default {
           this.getPlaceList();
         }
         else {
-          this.$message.error(res.data.message || "修改失败！")
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "修改失败！")
         }
       }).catch(() => {
         this.$message.error("修改失败！")
@@ -220,7 +221,8 @@ export default {
           this.getPlaceList()
         }
         else {
-          this.$message.error(res.data.message || "新增失败！")
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "新增失败！")
         }
       }).catch(() => {
         this.$message.error("新增失败！")
@@ -240,7 +242,8 @@ export default {
             this.getPlaceList()
           }
           else {
-            this.$message.error(res.data.message || "删除失败！")
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "删除失败！")
           }
         }).catch(() => {
           this.$message.error("删除失败！")

@@ -214,7 +214,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取权限树失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取权限树失败！");
           }
         }
       }).catch((error) => {
@@ -243,7 +244,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取角色列表失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取角色列表失败！");
           }
           return Promise.reject(res); // 返回失败的结果
         }
@@ -313,7 +315,8 @@ export default {
         } else {
           // 40101错误已经在request.js中处理，这里不再重复提示
           if (res.data.code !== 40101) {
-            this.$message.error(res.data.message || "获取角色权限失败！");
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "获取角色权限失败！");
           }
         }
       }).catch((error) => {
@@ -407,7 +410,8 @@ export default {
               this.getRoleList()
               this.addShow = false
             } else {
-              this.$message.error(res.data.message || "新增失败！")
+              // 优先显示description，如果没有则显示message
+              this.$message.error(res.data.description || res.data.message || "新增失败！")
             }
           }).catch(() => {
             this.$message.error("新增失败！")
@@ -424,7 +428,8 @@ export default {
               this.getRoleList()
               this.updateShow = false
             } else {
-              this.$message.error(res.data.message || "修改失败！")
+              // 优先显示description，如果没有则显示message
+              this.$message.error(res.data.description || res.data.message || "修改失败！")
             }
           }).catch(() => {
             this.$message.error("修改失败！")
@@ -468,7 +473,8 @@ export default {
           // 分配成功后，刷新角色列表
           this.getRoleList()
         } else {
-          this.$message.error(res.data.message || "分配失败！")
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "分配失败！")
         }
       }).catch(() => {
         this.$message.error("分配失败！")
@@ -485,7 +491,8 @@ export default {
             this.$message.success("删除成功！")
             this.getRoleList()
           } else {
-            this.$message.error(res.data.message || "删除失败！")
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message || "删除失败！")
           }
         }).catch(() => {
           this.$message.error("删除失败！")

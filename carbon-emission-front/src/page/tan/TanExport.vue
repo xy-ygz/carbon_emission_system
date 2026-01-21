@@ -428,7 +428,8 @@ export default {
         if (res.data.code == 200) {
           this.schoolInfo = res.data.data || {};
         } else {
-          this.$message.error(res.data.message || "获取学校信息失败！");
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "获取学校信息失败！");
         }
       }).catch((error) => {
         if (!error.response || !error.response.data || error.response.data.code !== 40101) {
@@ -1406,7 +1407,8 @@ export default {
         } else {
           this.exportStatus = true;
           this.msg.close();
-          const errorMsg = res.data && res.data.message ? res.data.message : "创建导出任务失败";
+          // 优先显示description，如果没有则显示message
+          const errorMsg = res.data && (res.data.description || res.data.message) ? (res.data.description || res.data.message) : "创建导出任务失败";
           console.error('创建导出任务失败，响应:', res);
           this.$message.error(errorMsg);
         }

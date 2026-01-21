@@ -70,7 +70,7 @@ class TokenManager {
           this.setTokens(token, newRefreshToken, expiresIn);
           return token;
         } else {
-          throw new Error(response.data.message || 'Refresh token failed');
+          throw new Error(response.data.description || response.data.message || 'Refresh token failed');
         }
       })
       .catch(error => {
@@ -87,7 +87,7 @@ class TokenManager {
 
   startAutoRefresh() {
     this.stopAutoRefresh();
-    
+
     const expireTime = this.getTokenExpireTime();
     if (!expireTime) return;
 

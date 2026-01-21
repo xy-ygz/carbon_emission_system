@@ -405,7 +405,8 @@ export default {
             }]
           })
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       }).catch(() => {
       }).finally(() => {
@@ -528,7 +529,8 @@ export default {
             }]
           })
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       }).catch(() => {
       }).finally(() => {

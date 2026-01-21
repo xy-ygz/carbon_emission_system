@@ -324,7 +324,8 @@ export default {
         if (res.data.code == 200) {
           this.$message.success(res.data.data);
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       }).catch(() => {
 
@@ -354,7 +355,8 @@ export default {
         if (res.data.code == 200) {
           this.$message.success(res.data.data);
         } else {
-          this.$message.error(res.data.message);
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message);
         }
       }).catch(() => {
 
@@ -395,7 +397,8 @@ export default {
             let currentPage = this.current > totalPage ? totalPage : this.current
             this.current = currentPage < 1 ? 1 : currentPage
           } else {
-            this.$message.error(res.data.message)
+            // 优先显示description，如果没有则显示message
+            this.$message.error(res.data.description || res.data.message)
           }
         }).catch(() => {
         }).finally(() => {
@@ -442,7 +445,8 @@ export default {
         this.getAllEmission();
       } else {
         this.$refs.upload.clearFiles();
-        this.$message.error(res.message);
+        // 优先显示description，如果没有则显示message
+        this.$message.error(res.description || res.message);
         this.emissionAddForm = false;
         this.fileRes = {};
       }

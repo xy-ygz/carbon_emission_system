@@ -131,7 +131,8 @@ export default {
           // 保存原始数据用于重置
           this.originalSchoolData = JSON.parse(JSON.stringify(this.schoolData))
         } else {
-          this.$message.error(res.data.message || "获取学校信息失败！");
+          // 优先显示description，如果没有则显示message
+          this.$message.error(res.data.description || res.data.message || "获取学校信息失败！");
         }
       }).catch((error) => {
         // 40101错误已经在request.js中处理，这里不再重复提示
@@ -149,7 +150,8 @@ export default {
               this.$message.success("修改成功！")
               this.loadSchoolInfo()
             } else {
-              this.$message.error(res.data.message || "修改失败！")
+              // 优先显示description，如果没有则显示message
+              this.$message.error(res.data.description || res.data.message || "修改失败！")
             }
           }).catch((error) => {
             // 40101错误已经在request.js中处理，这里不再重复提示

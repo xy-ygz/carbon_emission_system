@@ -1,3 +1,5 @@
+name: carbon_emission_system
+
 services:
   # 前端服务
   frontend:
