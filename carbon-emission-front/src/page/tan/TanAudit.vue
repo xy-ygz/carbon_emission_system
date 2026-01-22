@@ -150,12 +150,12 @@
 </template>
 <script>
 import MyEcharts from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import { getCarbonLine, getCarbonTable } from "../../api/carbonEmission";
 import axios from "axios";
 import { publicNetworkIpAndPort } from "../../api/globalVar";
 export default {
-  components: { TanHeader, MyEcharts },
+  components: { TanTotal, MyEcharts },
   name: "",
   filters: {
     formatNumber(value) {
@@ -194,7 +194,6 @@ export default {
     };
   },
   mounted: function () {
-    console.log("TanAudit组件已挂载，开始初始化")
     this.getCarbonTable()
     this.getCarbonBuiding()
     // 监听窗口大小变化，重新渲染图表

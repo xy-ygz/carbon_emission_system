@@ -281,7 +281,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([SankeyChart, CanvasRenderer]);
 import MyPie from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import {
   getJunzhi,
   getCarbonMulberry,
@@ -296,7 +296,7 @@ import { getAllCategory, getAllExchangeSetting } from "../../api/exchangeSetting
 import { getSchoolInfo } from "../../api/school";
 import request from "../../utils/request";
 export default {
-  components: { TanHeader, MyPie },
+  components: { TanTotal, MyPie },
   name: "",
   data() {
     return {

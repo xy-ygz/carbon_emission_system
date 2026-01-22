@@ -3,7 +3,7 @@ import Router from "vue-router";
 import HelloWorld from "../components/HelloWorld";
 import Login from "../page/Login";
 
-import TanHeader from "../components/TanHeader.vue";
+import TanTotal from "../components/TanTotal.vue";
 import TanPage from "../page/tan/TanPage";
 import TanContrast from "../page/tan/TanContrast";
 import TanAudit from "../page/tan/TanAudit";
@@ -18,8 +18,6 @@ import ManagePermission from "../page/admin/ManagePermission";
 import TanResult from "../page/tan/TanResult";
 import TanAnalyse from "../page/tan/TanAnalyse";
 import TanExport from "../page/tan/TanExport";
-import AdminHeader from "../components/AdminHeader";
-import adminPage from "../page/admin/adminPage";
 import { Message } from "element-ui";
 Vue.prototype.$message = Message;
 Vue.use(Router);
@@ -37,7 +35,7 @@ const router = new Router({
     {
       path: "/Tan",
       name: "Tan",
-      component: TanHeader,
+      component: TanTotal,
       redirect: "/Tan/TanPage",
       children: [
         {

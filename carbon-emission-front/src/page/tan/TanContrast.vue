@@ -106,12 +106,12 @@
 </template>
 <script>
 import MyEcharts from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import { getCarbonBuilding, getCarbonLine } from "../../api/carbonEmission";
 import axios from "axios";
 import { publicNetworkIpAndPort } from "../../api/globalVar";
 export default {
-  components: { TanHeader, MyEcharts },
+  components: { TanTotal, MyEcharts },
   name: "",
   filters: {
     formatNumber(value) {
