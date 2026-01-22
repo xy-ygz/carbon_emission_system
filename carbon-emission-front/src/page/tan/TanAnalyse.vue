@@ -158,13 +158,13 @@
 </template>
 
 <script>
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import { getConsumptionCount } from "../../api/carbonEmission";
 import { getAllCategory } from "../../api/exchangeSetting";
 import request from "../../utils/request";
 
 export default {
-  components: { TanHeader },
+  components: { TanTotal },
   name: "TanAnalyse",
   data() {
     return {
