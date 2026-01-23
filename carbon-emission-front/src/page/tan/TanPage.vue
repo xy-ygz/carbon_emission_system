@@ -124,11 +124,11 @@
 </template>
 <script>
 import MyEcharts from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import { getSchoolInfo } from "../../api/school";
 import request from "../../utils/request";
 export default {
-  components: { TanHeader, MyEcharts },
+  components: { TanTotal, MyEcharts },
   name: "",
   data() {
     return {

@@ -97,7 +97,7 @@ echarts.use([SankeyChart, CanvasRenderer]);
 // 这个警告是Chrome浏览器对性能优化的建议，不会影响功能
 // 禁用相关功能可能影响用户体验，因此选择接受此警告
 import MyPie from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import {
   getCarbonMulberry,
   getDuijizhuCategory,
@@ -107,7 +107,7 @@ import {
 import axios from "axios";
 import { publicNetworkIpAndPort } from "../../api/globalVar";
 export default {
-  components: { TanHeader, MyPie },
+  components: { TanTotal, MyPie },
   name: "",
   data() {
     return {

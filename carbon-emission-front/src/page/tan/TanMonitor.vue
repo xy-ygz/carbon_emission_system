@@ -110,12 +110,12 @@
 </template>
 <script>
 import MyEcharts from "../../components/Assessment";
-import TanHeader from "../../components/TanHeader";
+import TanTotal from "../../components/TanTotal";
 import { getCarbonLine } from "../../api/carbonEmission";
 import axios from "axios";
 import { publicNetworkIpAndPort } from "../../api/globalVar";
 export default {
-  components: { TanHeader, MyEcharts },
+  components: { TanTotal, MyEcharts },
   name: "",
   filters: {
     formatNumber(value) {
@@ -164,7 +164,6 @@ export default {
     };
   },
   mounted: function () {
-    console.log("组件已挂载，开始初始化")
     this.getCarbonBar();
     this.getBuilding();
     // 监听窗口大小变化，重新渲染图表
@@ -173,7 +172,6 @@ export default {
     // 添加延迟渲染，确保DOM完全加载
     setTimeout(() => {
       if (this.carbonInformation && this.carbonInformation.length > 0) {
-        console.log("延迟渲染图表")
         this.renderChart();
       }
     }, 1000);
@@ -181,7 +179,6 @@ export default {
   updated() {
     // 当组件更新时，如果有数据变化，重新渲染图表
     if (this.carbonInformation && this.carbonInformation.length > 0 && !this.myChart4) {
-      console.log("检测到数据更新，重新渲染图表")
       this.$nextTick(() => {
         this.renderChart();
       });
@@ -287,11 +284,8 @@ export default {
     },
     renderChart() {
       if (!this.carbonInformation || this.carbonInformation.length === 0) {
-        console.log('没有数据，跳过图表渲染');
         return;
       }
-
-      console.log('开始渲染图表，数据长度:', this.carbonInformation.length);
 
       // 使用$nextTick确保DOM完全渲染
       this.$nextTick(() => {
@@ -346,12 +340,9 @@ export default {
           mySeries.push(seriesObj);
         });
 
-        console.log('系列数据:', mySeries);
-
         // 获取或创建图表实例
         const chartContainer = document.getElementById('myChart4');
         if (!chartContainer) {
-          console.error('图表容器不存在');
           return;
         }
 
@@ -360,7 +351,6 @@ export default {
           this.myChart4.dispose();
         }
 
-        console.log('初始化ECharts实例');
         this.myChart4 = this.$echarts.init(chartContainer);
 
       const option = {
@@ -458,9 +448,7 @@ export default {
         }]
         };
 
-        console.log('设置图表选项');
         this.myChart4.setOption(option, true);
-        console.log('图表渲染完成');
       });
     },
     getBuilding() {
@@ -574,16 +562,13 @@ export default {
 
     },
     getCarbonBar() {
-      console.log("getCarbonBar 开始调用")
       // 初始调用时不传year参数（让后端回退查找）
       getCarbonLine({ building: this.building }).then(res => {
-        console.log("getCarbonBar 收到响应:", res.data.code)
         if (this.year == '')
           this.showValue = false;
         else
           this.showValue = true;
         if (res.data.code == 200) {
-          console.log("数据:", res.data.data)
           this.carbonInformation = res.data.data
 
           // 如果用户选择了年份，显示用户选择的；如果用户没选择，显示后端返回的实际年份
@@ -610,7 +595,6 @@ export default {
             k++;
           }
 
-          console.log("准备调用 calculateKPIs, prepareTableData, renderChart")
           this.calculateKPIs();
           this.prepareTableData();
           this.renderChart();

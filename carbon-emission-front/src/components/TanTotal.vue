@@ -10,9 +10,10 @@
             <div class="title-main">北京林业大学</div>
             <div class="title-sub">BJFU</div>
           </div>
+          <div class="system-title">碳排放核算与管理系统</div>
         </div>
         <div class="right">
-          <div class="system-title">碳排放核算与管理系统</div>
+          
         <el-menu router class="tan-el-menu" mode="horizontal">
           <el-menu-item index="/Tan/TanPage" class="header-icon el-icon-s-home" style="font-size: 20px;">
             首页</el-menu-item>
@@ -32,11 +33,6 @@
                 style="font-size: 16px;">&nbsp;&nbsp;碳排放记录</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
-
-          <!--            </el-menu-item-group>-->
-          <!--          </el-submenu>-->
-          <!-- <el-menu-item index="/Tan/adminPage" class="header-icon el-icon-s-flag"
-            style="font-size: 23px;color: #323A39">能耗监测</el-menu-item> -->
           <el-submenu index="2">
             <template slot="title">
               <i class="header-icon el-icon-s-flag"></i>
@@ -51,8 +47,6 @@
                 style="font-size: 16px;">&nbsp;&nbsp;能耗碳排放对比</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
-          <!-- <el-menu-item index="/Tan/adminPage" class="header-icon el-icon-s-data"
-            style="font-size: 23px;color: #323A39">碳排放计算与减碳分析</el-menu-item> -->
           <el-submenu index="3">
             <template slot="title">
               <i class="header-icon el-icon-s-data"></i>
@@ -112,7 +106,7 @@ import { logoutApi } from '../api/user'
 import tokenManager from '../utils/tokenManager'
 
 export default {
-  name: 'TanHeader',
+  name: 'TanTotal',
   data() {
     return {
       loginForm: false,
@@ -159,8 +153,6 @@ export default {
         this.$router.push({ path: '/Tan/TanPage' })
       } else if (command == 'login') {
         this.$router.push({ path: '/Tan/TanLogin' })
-      } else if (command == 'backtoindex') {
-        this.$router.push({ path: '/Tan/adminPage' })
       }
     },
     jumpCarbon() {
@@ -218,14 +210,16 @@ export default {
 .total {
   padding: 0;
   width: 100%;
-  /* 移除 height: 100%，让内容自然撑开 */
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .header {
   white-space: nowrap;
-  position: fixed;
+  position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
   height: 80px;
@@ -238,12 +232,21 @@ export default {
   box-shadow: 0 2px 12px rgba(45, 80, 22, 0.15);
 }
 
+.child {
+  text-align: center; /* 改为 left，避免内容居中 */
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  overflow-x: hidden;
+  /* min-height: calc(100vh - 80px); 最小高度等于视口高度减去header高度，避免产生不必要的滚动条 */
+  background-color: var(--forest-bg-primary); /* 确保背景色正确 */
+}
+
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 1600px;
   gap: 20px;
 }
 
@@ -255,11 +258,29 @@ export default {
   display: flex !important;
   align-items: center !important;
   height: 80px !important;
-  gap: 12px !important;
+  gap: 20px !important;
   width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
-  padding-right: 15px !important;
+}
+
+
+.right {
+  white-space: nowrap;
+  height: 80px;
+  flex: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  vertical-align: top;
+  text-align: right;
+  display: flex;
+  justify-content: flex-end; /* 改为靠右对齐 */
+  align-items: center;
+  overflow: visible;
+  margin-left: 0;
+  gap: 25px; /* 系统标题和导航菜单之间的间距 */
+  /* padding-left: 20px; */
+  padding-right: 0; /* 确保右侧没有内边距 */
 }
 
 /* Logo 容器 */
@@ -359,25 +380,6 @@ export default {
 .forest-logo-icon {
   display: none !important;
 }
-
-.right {
-  white-space: nowrap;
-  height: 80px;
-  flex: 1;
-  flex-shrink: 1;
-  min-width: 0;
-  vertical-align: top;
-  text-align: left;
-  display: flex;
-  justify-content: flex-end; /* 改为靠右对齐 */
-  align-items: center;
-  overflow: visible;
-  margin-left: 0;
-  gap: 25px; /* 系统标题和导航菜单之间的间距 */
-  padding-left: 20px;
-  padding-right: 0; /* 确保右侧没有内边距 */
-}
-
 /* --- 优化后的系统标题样式 --- */
 .system-title {
   /* 字体设计：增加字间距和高级感 */
@@ -387,8 +389,7 @@ export default {
   letter-spacing: 2px !important; /* 减小字间距 */
   line-height: 1.4 !important;
   white-space: nowrap !important;
-  margin: 0 !important;
-  padding: 0 15px 0 0 !important; /* 增加右侧内边距，与导航栏保持间隔 */
+  margin-left: 20px;
   flex-shrink: 1 !important; /* 允许收缩 */
   min-width: 0 !important; /* 允许缩小 */
   position: relative !important;
@@ -512,16 +513,7 @@ export default {
   filter: drop-shadow(0 0 12px rgba(184, 217, 168, 0.8)) !important;
 }
 
-.child {
-  margin-top: 80px; /* 为固定的 header (80px) 留出空间 */
-  text-align: left; /* 改为 left，避免内容居中 */
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  overflow-x: hidden;
-  min-height: calc(100vh - 80px); /* 最小高度，确保内容区域足够大 */
-  background-color: var(--forest-bg-primary); /* 确保背景色正确 */
-}
+
 </style>
 <style>
 /* 全局样式：强制覆盖 Element UI 默认样式，防止菜单项激活时抖动 */
