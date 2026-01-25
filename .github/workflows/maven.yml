@@ -40,7 +40,7 @@ jobs:
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
       with:
-        file: ./carbon-emission-backend/pom.xml
+        directory: ./carbon-emission-backend
 
   build-frontend:
     name: Build Frontend (Vue + Node.js)
