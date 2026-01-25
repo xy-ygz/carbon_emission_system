@@ -153,7 +153,7 @@
         <i class="el-icon-s-data"></i>
         <span>{{ showYear }}年各排放源CO<sub>2</sub>排放量</span>
       </div>
-      <div id="myChart4" style="width:97%;height:360px;float:left;padding-left:20px;margin-top: 10px;"></div>
+      <div id="exportBarChart" style="width:97%;height:360px;float:left;padding-left:20px;margin-top: 10px;"></div>
     </div>
 
     <div style="margin: 25px auto;margin-top: 20px;margin-bottom: 60px;">
@@ -704,7 +704,7 @@ export default {
           //this.$refs.voteGraph.drawLine(xValueTemp, yValueTemp);
           // console.log(this.xxValue)
           // console.log(this.yyValue)
-          this.myChart4 = this.$echarts.init(document.getElementById('myChart4'))
+          this.myChart4 = this.$echarts.init(document.getElementById('exportBarChart'))
           this.myChart4.clear()
           this.myChart4.setOption({
             title: {
@@ -1623,7 +1623,7 @@ p {
   margin-top: 10px;
   padding: 20px 20px 0 20px;
   box-sizing: border-box;
-  min-height: calc(100vh - 100px);
+  min-height: auto; /* 移除固定最小高度，防止不必要的滚动条 */
 }
 
 .tanExport.tanResult {

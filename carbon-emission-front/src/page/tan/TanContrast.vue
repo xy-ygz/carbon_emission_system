@@ -90,7 +90,7 @@
           </div>
         </div>
         <div class="chart-container">
-          <div id="myChart4" class="chart-canvas"></div>
+          <div id="contrastBarChart" class="chart-canvas"></div>
         </div>
         <div class="chart-legend" v-if="buildingName && buildingName.length > 0">
           <div class="legend-items">
@@ -152,6 +152,12 @@ export default {
   mounted: function () {
     this.getCarbonBar()
     this.getBuilding()
+  },
+  beforeDestroy() {
+    if (this.myChart4) {
+      this.myChart4.dispose();
+      this.myChart4 = null;
+    }
   },
   methods: {
     getColor(index) {
@@ -327,8 +333,10 @@ export default {
           // console.log(this.xxValue)
           // console.log(this.yyValue)
           this.calculateStats(); // 计算统计数据
-          this.myChart4 = this.$echarts.init(document.getElementById('myChart4'))
-          this.myChart4.setOption({
+          const chartDom = document.getElementById('contrastBarChart');
+          if (chartDom) {
+            this.myChart4 = this.$echarts.init(chartDom)
+            this.myChart4.setOption({
             grid: {
               left: '2%',
               right: '3%',
@@ -404,6 +412,7 @@ export default {
               }
             }]
           })
+          }
         } else {
           // 优先显示description，如果没有则显示message
           this.$message.error(res.data.description || res.data.message);
@@ -451,8 +460,10 @@ export default {
           // console.log(this.xxValue)
           // console.log(this.yyValue)
           this.calculateStats(); // 计算统计数据
-          this.myChart4 = this.$echarts.init(document.getElementById('myChart4'))
-          this.myChart4.setOption({
+          const chartDom = document.getElementById('contrastBarChart');
+          if (chartDom) {
+            this.myChart4 = this.$echarts.init(chartDom)
+            this.myChart4.setOption({
             grid: {
               left: '2%',
               right: '3%',
@@ -528,6 +539,7 @@ export default {
               }
             }]
           })
+          }
         } else {
           // 优先显示description，如果没有则显示message
           this.$message.error(res.data.description || res.data.message);
@@ -544,7 +556,7 @@ export default {
 
 }
 </script>
-<style>
+<style scoped>
 .el-input__inner {
   height: 32.5px;
 }
@@ -721,22 +733,13 @@ export default {
 .carbon-carbon {
   width: 100%;
   background-color: var(--forest-bg-primary);
-  min-height: calc(100vh - 100px);
+  min-height: auto;
 }
 
 .main-box-carbon {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  /* padding: 20px; */
   background-color: transparent;
-}
-
-.carbonon,
-.carbonup {
-  display: inline-block;
-}
-
-.carbonup {
-  vertical-align: top;
 }
 </style>

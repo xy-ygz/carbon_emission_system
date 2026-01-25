@@ -436,11 +436,10 @@ export default {
 .content-wrapper {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
-  padding-top: 20px;
+  padding: 0 20px 20px 20px; /* 顶部间距改由父容器 child 提供 */
   box-sizing: border-box;
   background-color: var(--forest-bg-primary);
-  min-height: calc(100vh - 100px);
+  min-height: auto; /* 移除固定最小高度，防止不必要的滚动条 */
 }
 
 /* 筛选条件区域 */
@@ -645,7 +644,7 @@ export default {
 }
 
 .category-list {
-  max-height: 600px;
+  max-height: 580px;
   overflow-y: auto;
   padding: 20px;
 }
