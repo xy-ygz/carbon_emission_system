@@ -83,10 +83,6 @@
   font-size: 20px;
 }
 
-.forest-card-body {
-  padding: 24px;
-}
-
 /* ==================== 按钮样式 ==================== */
 .forest-btn-primary {
   background: var(--forest-gradient-primary);

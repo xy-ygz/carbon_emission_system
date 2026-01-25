@@ -94,7 +94,7 @@
         </div>
       </div>
     </div>
-    <div class="child">
+    <div class="child" :class="{ 'login-child': $route.path === '/Tan/TanLogin' }">
       <router-view></router-view>
     </div>
   </div>
@@ -210,12 +210,14 @@ export default {
 .total {
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  height: 100%; /* 使用百分比，由父级 App.vue 控制 */
+  overflow: hidden; /* 整体禁止滚动，由子组件控制 */
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
+  flex-shrink: 0; /* 头部固定 */
   white-space: nowrap;
   position: relative;
   display: flex;
@@ -224,8 +226,6 @@ export default {
   background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
   height: 80px;
   width: 100%;
-  top: 0px;
-  left: 0;
   z-index: 1000;
   padding: 0 40px;
   box-sizing: border-box;
@@ -233,13 +233,39 @@ export default {
 }
 
 .child {
-  text-align: center; /* 改为 left，避免内容居中 */
+  flex: 1; /* 占据剩余全部高度 */
+  min-height: 0; /* 允许 flex 子元素收缩 */
+  text-align: center;
   width: 100%;
   position: relative;
   z-index: 1;
   overflow-x: hidden;
-  /* min-height: calc(100vh - 80px); 最小高度等于视口高度减去header高度，避免产生不必要的滚动条 */
-  background-color: var(--forest-bg-primary); /* 确保背景色正确 */
+  overflow-y: auto; /* 允许纵向滚动 */
+  background-color: var(--forest-bg-primary);
+  padding-top: 20px; /* 统一的顶部间距 */
+}
+
+.login-child {
+  padding-top: 0 !important; /* 登录页不需要顶部间距，实现全屏铺满 */
+}
+
+/* 森林系风格滚动条 - 统一应用于所有页面容器 */
+.child::-webkit-scrollbar {
+  width: 8px;
+}
+
+.child::-webkit-scrollbar-track {
+  background: var(--forest-bg-primary);
+  border-radius: 4px;
+}
+
+.child::-webkit-scrollbar-thumb {
+  background: var(--forest-light);
+  border-radius: 4px;
+}
+
+.child::-webkit-scrollbar-thumb:hover {
+  background: var(--forest-secondary);
 }
 
 .header-content {

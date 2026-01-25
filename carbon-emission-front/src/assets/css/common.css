@@ -3,8 +3,8 @@ html,
 body {
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -33,11 +33,11 @@ body * {
 
 .main-box-admin {
   width: 94%;
-  margin: 20px auto 0;
+  margin: 0 auto;
   text-align: left;
   padding: 5px; /* 统一的紧凑间距 */
   background-color: #f0f7ed; /* Forest主题背景色 */
-  min-height: calc(100vh - 80px); /* 确保最小高度 */
+  min-height: auto; /* 移除固定最小高度，由内容自然撑开，防止不必要的滚动条 */
 }
 
 /* ==================== Header 相关样式 ==================== */

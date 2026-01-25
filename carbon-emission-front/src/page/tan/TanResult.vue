@@ -713,7 +713,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: calc(100vh - 100px);
+  min-height: auto;
 }
 
 /* 排放流动情况区域 */
@@ -769,25 +769,6 @@ export default {
   .filter-form {
     gap: 15px;
   }
-}
-
-/* 滚动条样式 */
-.result-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.result-content::-webkit-scrollbar-track {
-  background: var(--forest-bg-primary);
-  border-radius: 4px;
-}
-
-.result-content::-webkit-scrollbar-thumb {
-  background: var(--forest-light);
-  border-radius: 4px;
-}
-
-.result-content::-webkit-scrollbar-thumb:hover {
-  background: var(--forest-secondary);
 }
 
 /* 趋势对比控制区域 */
@@ -867,7 +848,7 @@ export default {
   margin: 0;
   padding: 20px;
   box-sizing: border-box;
-  min-height: calc(100vh - 140px);
+  min-height: auto;
 }
 
 /* 主要内容容器 */

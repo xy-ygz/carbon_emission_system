@@ -2,91 +2,94 @@
   <div class="index-main-box-carbon">
     <div class="indextop">
       <div class="left">
-        <div class="l forest-card"
-          style="width:850px;height:390px;margin-top:13px;position: relative;">
+        <div class="forest-card">
           <div class="forest-card-header">
-            <i class="el-icon-location-information"></i>
-            <span>全校概况</span>
+              <i class="el-icon-location-information"></i>
+              <span>全校概况</span>
           </div>
-          <el-descriptions class="xiaoyuangai" style="margin-top:20px;margin-left:20px;width:350px;height:200px" title=""
-            :column="1" size="medium" border :contentStyle="{color: '#1a3d0d'}" :labelStyle="{color: '#4a7c3a', fontWeight: 600}">
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-school"></i>
-                学校名称
-              </template>
-              北京林业大学
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-user"></i>
-                学校总人数
-              </template>
-              {{ schoolInformation.totalNumber }}
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-user-solid"></i>
-                在校学生人数
-              </template>
-              {{ schoolInformation.studentNumber }}
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-s-custom"></i>
-                在校教师人数
-              </template>
-              {{ schoolInformation.teacherNumber }}
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-s-home"></i>
-                校园总面积
-              </template>
-              {{ schoolInformation.totalArea }}
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-location-outline"></i>
-                校园绿化总面积
-              </template>
-              {{ schoolInformation.greenArea }}
-            </el-descriptions-item>
-            <el-descriptions-item>
-              <template slot="label">
-                <i class="el-icon-office-building"></i>
-                校园建筑物面积
-              </template>
-              {{ schoolInformation.buildingArea }}
-            </el-descriptions-item>
-          </el-descriptions>
-          <div class="xiaoyuantu" style="overflow: hidden;">
-            <div class="carbonbeijing" :style="{backgroundImage: schoolImageStyle, width: '400px', height: '300px', margin: '20px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(45, 80, 22, 0.1)', display: 'block'}"></div>
+          <div class="forest-card-body">
+            <div class="leftl">
+              <el-descriptions class="xiaoyuangai" title=""
+                :column="1" size="medium" border 
+                :contentStyle="{color: '#1a3d0d', fontSize: 'var(--forest-main-font-size)'}" 
+                :labelStyle="{color: '#4a7c3a', fontWeight: 600, fontSize: 'var(--forest-main-font-size)'}">
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-school"></i>
+                    学校名称
+                  </template>
+                  北京林业大学
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-user"></i>
+                    学校总人数
+                  </template>
+                  {{ schoolInformation.totalNumber }}
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-user-solid"></i>
+                    在校学生人数
+                  </template>
+                  {{ schoolInformation.studentNumber }}
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-s-custom"></i>
+                    在校教师人数
+                  </template>
+                  {{ schoolInformation.teacherNumber }}
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-s-home"></i>
+                    校园总面积
+                  </template>
+                  {{ schoolInformation.totalArea }}
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-location-outline"></i>
+                    校园绿化总面积
+                  </template>
+                  {{ schoolInformation.greenArea }}
+                </el-descriptions-item>
+                <el-descriptions-item>
+                  <template slot="label">
+                    <i class="el-icon-office-building"></i>
+                    校园建筑物面积
+                  </template>
+                  {{ schoolInformation.buildingArea }}
+                </el-descriptions-item>
+              </el-descriptions>
+            </div>
+            <div class="xiaoyuantu">
+              <div class="carbonbeijing" :style="{ backgroundImage: schoolImageStyle }"></div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="carbonright forest-card"
-        style="margin-top:13px;height:390px;flex: 1;min-width: 500px;">
+      <div class="carbonright forest-card">
         <div class="forest-card-header">
           <i class="el-icon-pie-chart"></i>
           <span>{{ curYear }}年北京林业大学碳排放构成</span>
         </div>
-        <div style="width: 100%;height: calc(100% - 50px);display: flex;justify-content: center;align-items: center;padding: 10px 20px 30px 20px;box-sizing: border-box;">
-          <MyEcharts ref="assessmentGraph" :x='xValue' :y="yValue" :ids="charts1" style="width: 100%;height: 100%;"></MyEcharts>
+        <div class="carbonright-chart-wrap">
+          <MyEcharts ref="assessmentGraph" :x="xValue" :y="yValue" :ids="charts1" :center="['40%', '50%']" :legendRight="'3%'" style="width: 100%; height: 100%;"></MyEcharts>
         </div>
       </div>
     </div>
 
     <div class="indexbottom">
       <div class="carbonon">
-        <div class="forest-card"
-          style="width:400px;margin-top:15px;height:330px;">
+        <div class="forest-card">
           <div class="forest-card-header">
             <i class="el-icon-menu"></i>
             <span>{{ curYear }}总体年CO<sub>2</sub>排放量情况</span>
           </div>
-          <div style="margin: 12px auto; width: calc(100% - 40px); display: flex; justify-content: center;">
-            <table style="width: 100%; max-width: 280px; height: 200px;" class="table_two forest-table" border="1px">
+          <div class="forest-card-body-table">
+            <table class="table_two forest-table" border="1px">
               <thead height="50px" style="text-align: center;"> <!--表格的头部-->
                 <th style="width: 40%;">指标</th>
                 <!--表格头部的特殊单元格，默认有加粗效果-->
@@ -111,13 +114,14 @@
           </div>
         </div>
       </div>
-      <div class="carbonup forest-card"
-        style="margin-top:15px;height:330px;flex: 1;min-width: 900px;">
+      <div class="carbonup forest-card">
         <div class="forest-card-header">
           <i class="el-icon-s-data"></i>
           <span>{{ curYear }}年各排放源CO<sub>2</sub>排放量</span>
         </div>
-        <div id="myChart4" style="width:95%;height:290px;float:left;margin-left:40px;margin-top: 15px"></div>
+        <div class="carbonup-chart-wrap">
+          <div id="homeSpeciesBarChart"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -187,15 +191,35 @@ export default {
     this.getPie()
     this.getCarbonBar()
     this.getCarbonData()
+    
+    // 页面加载完成后额外触发一次 resize，确保 flex 布局计算完成后图表能铺满
+    this.$nextTick(() => {
+      this.handleResize();
+    });
+  },
+  activated() {
+    // 针对 keep-alive 模式，回到页面时重新渲染并自适应
+    this.handleResize();
   },
   beforeDestroy() {
-    // 组件销毁前清理图表实例
+    // 组件销毁前清理图表实例和监听器
+    window.removeEventListener('resize', this.handleResize);
     if (this.myChart4) {
       this.myChart4.dispose();
       this.myChart4 = null;
     }
   },
   methods: {
+    // 抽离统一的 resize 方法
+    handleResize() {
+      if (this.myChart4) {
+        this.myChart4.resize();
+      }
+      // 如果子组件有 resize 方法也一并调用
+      if (this.$refs.assessmentGraph && this.$refs.assessmentGraph.resize) {
+        this.$refs.assessmentGraph.resize();
+      }
+    },
     getPie() {
       request.get("/api/carbonEmission/listSpeciesCarbon").then((res) => {
         if (res.data.code == 200) {
@@ -220,12 +244,7 @@ export default {
       });
     },
     getCarbonData() {
-      // console.log("xiaoyuancarbon")
-      // ////debugger
       request.get("/api/carbonEmission/collegeCarbonEmission").then((res) => {
-        // ////debugger
-        // console.log(res.data.code)
-        // console.log(res.data)
         if (res.data.code == 200) {
           this.carbonInformation = res.data.data
           // 如果返回了实际使用的年份，更新显示的年份
@@ -274,73 +293,95 @@ export default {
           }
           this.xxValue = xValueTemp;
           this.yyValue = yValueTemp;
-          //this.$refs.voteGraph.drawLine(xValueTemp, yValueTemp);
-          // console.log(this.xxValue)
-          // console.log(this.yyValue)
           
-          // 获取 DOM 元素
-          const chartDom = document.getElementById('myChart4');
-          if (!chartDom) {
-            return;
-          }
-          
-          // 先检查是否已有图表实例，如果有则先销毁
-          if (this.myChart4) {
-            this.myChart4.dispose();
-          }
-          
-          // 初始化echarts实例
-          this.myChart4 = this.$echarts.init(chartDom);
-          this.myChart4.setOption({
-            title: {
-              text: 'CO₂排放量(kg)'
-            },
-            tooltip: {
-              trigger: 'item',
-              formatter: (params) => {
-                // console.log(params);
-                return '碳排放量' + '<br/>' + params.marker + params.name + ':' + parseFloat(params.value).toFixed(2) + '(kg)' + '<br/>';
-              },
-            },
-            legend: {
-              orient: 'vertical',
-              x: 'right',
-              y: 'top',
-              data: ['CO₂排放量']
-            },
-            xAxis: {
-              data: this.xxValue,
-              axisLabel: {
-                interval: 0
-              },
-            },
-            yAxis: {},
-            series: [{
-              name: 'CO₂排放量',
-              type: 'bar',
-              data: this.yyValue,
-              itemStyle: {
-                color: function () {
-                  // 自定义颜色
-                  // var colorList = ['#1ab394', '#FB4A55', 'cadetblue','#E6A23C','#409EFF','cadetblue','#409EFF','#E6A23C']
-                  // return colorList[params.dataIndex]
-                  return "#" + Math.floor(Math.random() * 16777215).toString(16);
-                }
-              },
-              emphasis: {
-                itemStyle: {
-                  shadowBlur: 10,
-                  shadowOffsetX: 0,
-                  shadowColor: 'rgba(0, 0, 0, 0.5)'
-                }
-              }
-            }]
-          })
+          this.$nextTick(() => {
+            // 获取 DOM 元素
+            const chartDom = document.getElementById('homeSpeciesBarChart');
+            if (!chartDom) {
+              return;
+            }
+            
+            // 核心修复：确保 DOM 已经有宽高，否则延迟初始化
+            if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+              setTimeout(() => {
+                this.initSpeciesBarChart(chartDom);
+              }, 100);
+            } else {
+              this.initSpeciesBarChart(chartDom);
+            }
+          });
         }
       }).catch(() => {
       }).finally(() => {
       });
 
+    },
+    // 将初始化逻辑抽离，支持重试
+    initSpeciesBarChart(chartDom) {
+      if (!chartDom) return;
+      
+      // 先检查是否已有图表实例，如果有则先销毁
+      if (this.myChart4) {
+        this.myChart4.dispose();
+      }
+      
+      // 初始化echarts实例
+      this.myChart4 = this.$echarts.init(chartDom);
+      this.myChart4.setOption({
+        title: {
+          text: 'CO₂排放量(kg)',
+          left: 'left',
+          top: '0%'
+        },
+        grid: {
+          top: '20%',
+          left: '3%',
+          right: '3%',
+          bottom: '3%',
+          containLabel: true
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: (params) => {
+            return '碳排放量' + '<br/>' + params.marker + params.name + ':' + parseFloat(params.value).toFixed(2) + '(kg)' + '<br/>';
+          },
+        },
+        legend: {
+          orient: 'vertical',
+          x: 'right',
+          y: 'top',
+          data: ['CO₂排放量']
+        },
+        xAxis: {
+          data: this.xxValue,
+          axisLabel: {
+            interval: 0
+          },
+        },
+        yAxis: {},
+        series: [{
+          name: 'CO₂排放量',
+          type: 'bar',
+          barMaxWidth: '40%',
+          data: this.yyValue,
+          itemStyle: {
+            color: function () {
+              return "#" + Math.floor(Math.random() * 16777215).toString(16);
+            }
+          },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        }]
+      })
+      
+      // 移除旧的监听并添加新的 resize 监听
+      window.removeEventListener('resize', this.handleResize);
+      window.addEventListener('resize', this.handleResize);
     }
 
   },
@@ -350,26 +391,112 @@ export default {
 }
 </script>
 <style>
+/* flex: 0 1 60%（基础 60%、可收缩、不放大），在 .indextop 的 flex 中正确占 60% 宽；
+   min-width: 0 使 flex 子项能在有 gap 时按比例收缩，避免被内容撑满。 */
 .left {
   position: relative;
+  flex: 0 1 60%;
+  min-width: 0;
+  display: flex;
 }
 
-.table_two {
+/* 让左侧卡片铺满 .left，且为纵向 flex，这样 .forest-card-body 的 flex: 1 才能占满 header 下方的剩余高度。 */
+.left .forest-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* min-height: 0：flex 子项默认 min-height: auto 会按内容撑高，导致 flex: 1 无法正确拿到剩余高度；设为 0 才能让正文区占满 header 下方的空间。 */
+.forest-card-body {
+  display: flex;
+  flex: 1; /* 智能占 “剩余空间” */
+  min-height: 0;
+  overflow: hidden;
+}
+
+.leftl {
+  flex: 0 0 40%; /*学校描述占40%*/ 
+  min-width: 0;
+  overflow: hidden; /* 核心：防止描述内容溢出导致宽高失控 */
+  display: flex;
+  flex-direction: column;
+}
+
+.xiaoyuangai {
+  /* padding-top: 20px; */
+  padding: 10px 0 15px 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box; /* 确保 padding 不会撑破容器 */
+}
+
+/* 核心优化：强制 el-descriptions 内部组件完全填满或按比例缩放 */
+.index-main-box-carbon .xiaoyuangai .el-descriptions__body {
+  width: 91%; /* 与底部表格保持一致 */
+  height: 93%; /* 与底部表格保持一致 */
+  background: transparent;
+  display: flex;
+}
+
+.index-main-box-carbon .xiaoyuangai .el-descriptions-table {
+  flex: 1;
+  height: 100% !important;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.index-main-box-carbon .xiaoyuangai .el-descriptions-table tr {
+  height: calc(100% / 7) !important;
+}
+
+/* 统一首页字体大小 & 垂直居中 */
+.index-main-box-carbon .xiaoyuangai .el-descriptions-item__label,
+.index-main-box-carbon .xiaoyuangai .el-descriptions-item__content {
+  font-size: var(--forest-main-font-size) !important;
+  vertical-align: middle;
+}
+
+.xiaoyuantu {
+  flex: 0 0 60%;  /*图占60%*/ 
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.forest-card-body .carbonbeijing {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  min-height: 88%;
+  margin: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(45, 80, 22, 0.1);
+  display: block;
+}
+
+.index-main-box-carbon .table_two {
   margin: 16px;
   border-collapse: collapse;
 }
 
 .carbonbeijing {
-  position: absolute;
-  top: 55px;
-  right: 20px;
+  position: relative;
   width: 400px;
   height: 300px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   max-width: calc(100% - 40px);
-  max-height: calc(100% - 110px);
+  max-height: calc(100% - 95px);
 }
 
 .carbon-carbon {
@@ -382,32 +509,39 @@ export default {
   background-color: var(--forest-bg-primary);
   width: 100%;
   margin: 0;
-  min-height: calc(100vh - 100px);
-  padding: 20px;
-  text-align: left;
-  margin-top: 0;
-  margin-bottom: 0;
+  height: 100%; /* 占据父级 .child 的 100% 高度 */
+  min-height: 0;
+  text-align: center;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 确保内部不溢出产生滚动条 */
+  /* 抽取全局字体属性，确保全页比例协调 */
+  --forest-main-font-size: 1.03rem;
 }
 
+/* 左 60% + 右 40%”未正确生效时会多出中间空白，改为 flex-start 让左右紧挨排布，align-items: stretch：让 .left 与 .carbonright 等高，右侧饼图卡片才能与左侧「全校概况」齐高。 */
 .indextop {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  width: 100%;
-  max-width: 1600px;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;  /* 让所有 flex 子元素在交叉轴方向上自动拉伸，填满父容器的交叉轴空间，无需手动设置子元素的高度 / 宽度（取决于 flex 方向） */
+  width: 80%;
   margin: 0 auto;
   gap: 15px;
+  height: 50%; /* 占据父容器 60% 高度 */
 }
 
+/* 底部一行：左侧表格卡片 + 右侧柱状图 */
 .indexbottom {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  width: 100%;
-  max-width: 1600px;
+  align-items: stretch; /* 子元素齐高 */
+  width: 80%;
   margin: 0 auto;
-  gap: 20px;
+  margin-top: 20px;
+  gap: 15px;
+  height: 40%; /* 占据父容器 40% 高度 */
 }
 
 .forest-card {
@@ -436,34 +570,32 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
 }
 
-.forest-card-header i {
-  font-size: 20px;
-}
-
-.forest-table thead {
+.index-main-box-carbon .forest-table thead {
   background: linear-gradient(135deg, #4a7c3a 0%, #2d5016 100%);
   color: white;
 }
 
-.forest-table {
+.index-main-box-carbon .forest-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  height: 100%; /* 首页表格强制填满 */
 }
 
-.forest-table th {
+.index-main-box-carbon .forest-table th {
   padding: 12px 8px;
   text-align: center;
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.2);
   word-wrap: break-word;
+  font-size: var(--forest-main-font-size);
 }
 
-.forest-table td {
+.index-main-box-carbon .forest-table td {
   padding: 12px 8px;
   text-align: center;
   border: 1px solid #c8e0c0;
@@ -471,25 +603,95 @@ export default {
   word-wrap: break-word;
 }
 
-.forest-table tbody tr:hover {
+.index-main-box-carbon .forest-table tbody tr:hover {
   background: #e8f5e3;
 }
 
-.left,
+/* 饼图卡片 flex: 0 1 40% 在 flex 行里占 40%；display: flex; flex-direction: column（竖直方向排列） 让 .carbonright-chart-wrap 用 flex: 1 占满 header 下方的空间，饼图才有高度。 */
 .carbonright {
-  display: inline-block;
+  flex: 0 1 40%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column; 
 }
 
-.carbonright {
-  vertical-align: top;
+/* flex: 1 占满 .carbonright 除 header 外的剩余高度；min-height: 0 重置 flex 元素的最小高度限制，允许高度压缩，默认 min-height: auto：flex 元素的最小高度不能小于其内容的高度； */
+.carbonright-chart-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.carbonon,
+/* ---------- 底部区域：左侧表格卡片与右侧柱状图并排 ---------- */
+.carbonon {
+  flex: 0 1 24%; /* 占据 30% 宽度 */
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.carbonon .forest-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.index-main-box-carbon .forest-card-body-table {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch; /* 让子元素（table）拉伸填满高度 */
+  padding-top: 15px;
+  overflow: hidden;
+}
+
+.index-main-box-carbon .forest-card-body-table .table_two {
+  width: 91%;
+  height: 93% !important; /* 强制表格填满容器，增加权重防止被全局覆盖 */
+  margin: 0; /* 移除 margin 防止溢出 */
+  table-layout: fixed;
+}
+
+.index-main-box-carbon .forest-card-body-table .table_two thead {
+  height: 50px; /* 固定表头高度 */
+}
+
+.index-main-box-carbon .forest-card-body-table .table_two tbody {
+  height: auto;
+}
+
+.index-main-box-carbon .forest-card-body-table .table_two tr {
+  height: calc((100% - 50px) / 3) !important; /* 3 行均分剩余高度，强制执行 */
+}
+
+.index-main-box-carbon .forest-card-body-table .table_two th,
+.index-main-box-carbon .forest-card-body-table .table_two td {
+  padding: 0 10px;
+  vertical-align: middle;
+  font-size: var(--forest-main-font-size);
+}
+
 .carbonup {
-  display: inline-block;
+  flex: 1; /* 占据剩余宽度 */
+  min-width: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
-.carbonup {
-  vertical-align: top;
+.carbonup-chart-wrap {
+  flex: 1;
+  min-height: 0;
+  padding: 15px 0px 5px 5px; /* 减少底部内边距 */
+  box-sizing: border-box;
+}
+
+#homeSpeciesBarChart {
+  width: 100%;
+  height: 100%;
 }
 </style>

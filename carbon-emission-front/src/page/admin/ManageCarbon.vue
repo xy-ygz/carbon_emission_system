@@ -248,7 +248,7 @@ export default {
     getCategeoryList() {
       getAllCategory().then(res => {
         // console.log(res.data);
-        this.categoryList = res.data
+        this.categoryList = res.data.data
       }).catch(() => {
         this.$message.error("获取分类失败！")
       }).finally(() => {
@@ -536,7 +536,7 @@ export default {
 
 .main-box-admin {
   width: 94%;
-  margin: 20px auto 0;
+  margin: 0 auto;
   text-align: left;
   padding: 5px; /* 从3%减少到5px，减少页面顶部间距 */
 }

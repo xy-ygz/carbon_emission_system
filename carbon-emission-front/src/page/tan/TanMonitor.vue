@@ -93,7 +93,7 @@
           </div>
         </div>
         <div class="chart-container">
-          <div id="myChart4" class="chart-canvas"></div>
+          <div id="monitorBarChart" class="chart-canvas"></div>
         </div>
         <div class="chart-legend" v-if="carbonInformation.length > 0">
           <div class="legend-items">
@@ -341,7 +341,7 @@ export default {
         });
 
         // 获取或创建图表实例
-        const chartContainer = document.getElementById('myChart4');
+        const chartContainer = document.getElementById('monitorBarChart');
         if (!chartContainer) {
           return;
         }
@@ -617,13 +617,12 @@ export default {
 .carbon-carbon {
   width: 100%;
   background-color: var(--forest-bg-primary);
-  min-height: calc(100vh - 100px);
+  min-height: auto; /* 移除固定最小高度，防止不必要的滚动条 */
 }
 
 .main-box-carbon {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
   background-color: transparent;
 }
 

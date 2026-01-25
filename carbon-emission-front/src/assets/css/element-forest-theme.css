@@ -348,14 +348,13 @@
 
 /* ==================== 主容器样式 ==================== */
 .main-box-admin {
-  margin: 20px auto 0;
+  margin: 0 auto;
   background-color: #f0f7ed;
-  min-height: calc(100vh - 80px);
+  min-height: auto;
   padding: 5px; /* 从3%减少到5px，减少页面顶部间距 */
 }
 
 .main-box-carbon {
   background-color: #f0f7ed;
-  min-height: calc(100vh - 80px);
-  padding: 20px;
+  min-height: auto;
 }
