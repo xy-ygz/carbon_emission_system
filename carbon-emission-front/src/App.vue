@@ -29,6 +29,15 @@ export default {
 @import './assets/css/forest-theme.css';
 @import './assets/css/element-forest-theme.css';
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* 防止最外层出现滚动条 */
+}
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -37,7 +46,8 @@ export default {
   color: #1a3d0d;
   background-color: #f0f7ed;
   width: 100%;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   position: relative;
 }

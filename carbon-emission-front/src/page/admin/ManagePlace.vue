@@ -288,7 +288,7 @@ export default {
 
 .main-box-admin {
   width: 94%;
-  margin: 20px auto 0;
+  margin: 0 auto;
   text-align: left;
   padding: 5px; /* 从3%减少到5px，减少页面顶部间距 */
 }

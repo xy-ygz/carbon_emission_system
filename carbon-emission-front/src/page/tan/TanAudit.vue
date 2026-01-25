@@ -467,13 +467,12 @@ export default {
 .carbon-carbon {
   width: 100%;
   background-color: var(--forest-bg-primary);
-  min-height: calc(100vh - 100px);
+  min-height: auto; /* 移除固定最小高度，防止不必要的滚动条 */
 }
 
 .main-box-carbon {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
   background-color: transparent;
 }
 
@@ -481,7 +480,7 @@ export default {
 .carbon-carbon {
   width: 100%;
   background-color: var(--forest-bg-primary);
-  min-height: calc(100vh - 100px);
+  min-height: auto; /* 移除固定最小高度，防止不必要的滚动条 */
 }
 
 /* 统计概览区域 */
@@ -688,10 +687,6 @@ export default {
 @media (max-width: 768px) {
   .summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .main-box-carbon {
-    padding: 10px;
   }
 
   .filter-form {
