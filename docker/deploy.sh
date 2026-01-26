@@ -144,7 +144,7 @@ docker-compose ps
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}访问地址：${NC}"
-echo -e "${GREEN}前端: http://localhost:4432${NC}"
+echo -e "${GREEN}前端: http://localhost${NC}"
 echo -e "${GREEN}后端: http://localhost:12306/api${NC}"
 echo -e "${GREEN}数据库: localhost:4436${NC}"
 echo -e "${GREEN}========================================${NC}"

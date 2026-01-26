@@ -7,7 +7,7 @@ services:
     container_name: carbon-frontend
     restart: always
     ports:
-      - "4432:8080"
+      - "80:8080"
     networks:
       - carbon-network
     depends_on:
@@ -81,7 +81,7 @@ services:
       LC_ALL: C.UTF-8
     volumes:
       # 容器启动时，会自动执行 /docker-entrypoint-initdb.d/ 目录下的 SQL 文件
-      - ../carbon-emission-backend/src/main/resources/sql/:/docker-entrypoint-initdb.d
+      - ./sql:/docker-entrypoint-initdb.d
       # MySQL 数据持久化
       - mysql_data:/var/lib/mysql
     command:
