@@ -25,42 +25,42 @@
                     <i class="el-icon-user"></i>
                     学校总人数
                   </template>
-                  {{ schoolInformation.totalNumber }}
+                  {{ formatNumber(schoolInformation.totalNumber) }}
                 </el-descriptions-item>
                 <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-user-solid"></i>
                     在校学生人数
                   </template>
-                  {{ schoolInformation.studentNumber }}
+                  {{ formatNumber(schoolInformation.studentNumber) }}
                 </el-descriptions-item>
                 <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-s-custom"></i>
                     在校教师人数
                   </template>
-                  {{ schoolInformation.teacherNumber }}
+                  {{ formatNumber(schoolInformation.teacherNumber) }}
                 </el-descriptions-item>
                 <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-s-home"></i>
-                    校园总面积
+                    校园总面积(㎡)
                   </template>
-                  {{ schoolInformation.totalArea }}
+                  {{ formatNumber(schoolInformation.totalArea) }}
                 </el-descriptions-item>
                 <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-location-outline"></i>
-                    校园绿化总面积
+                    校园绿化总面积(㎡)
                   </template>
-                  {{ schoolInformation.greenArea }}
+                  {{ formatNumber(schoolInformation.greenArea) }}
                 </el-descriptions-item>
                 <el-descriptions-item>
                   <template slot="label">
                     <i class="el-icon-office-building"></i>
-                    校园建筑物面积
+                    校园建筑物面积(㎡)
                   </template>
-                  {{ schoolInformation.buildingArea }}
+                  {{ formatNumber(schoolInformation.buildingArea) }}
                 </el-descriptions-item>
               </el-descriptions>
             </div>
@@ -99,15 +99,15 @@
                 <!--tbody是一个语义化标签，没有任何作用，只是告诉你这部分是表格的身体-->
                 <tr> <!--第一行的三个单元格： 单元格1  单元格2  单元格3-->
                   <td style="background-color: #f0f7ed;font-weight: 600;">总量</td>
-                  <td>{{ parseFloat(carbonInformation.totalEmission).toFixed(2) }}</td>
+                  <td>{{ formatNumber(parseFloat(carbonInformation.totalEmission).toFixed(2)) }}</td>
                 </tr>
                 <tr> <!--第二行的三个单元格：单元格4 单元格5 单元格6-->
                   <td style="background-color: #f0f7ed;font-weight: 600;">人均</td>
-                  <td>{{ parseFloat(carbonInformation.personAverageEmission).toFixed(2) }}</td>
+                  <td>{{ formatNumber(parseFloat(carbonInformation.personAverageEmission).toFixed(2)) }}</td>
                 </tr>
                 <tr>
                   <td style="background-color: #f0f7ed;font-weight: 600;">地均</td>
-                  <td>{{ parseFloat(carbonInformation.groundAverageEmission).toFixed(2) }}</td>
+                  <td>{{ formatNumber(parseFloat(carbonInformation.groundAverageEmission).toFixed(2)) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -210,6 +210,20 @@ export default {
     }
   },
   methods: {
+    // 格式化数字，添加千位逗号分隔符
+    formatNumber(value) {
+      if (value === null || value === undefined || value === '') {
+        return '';
+      }
+      // 将值转换为字符串
+      const str = String(value);
+      // 分离整数部分和小数部分
+      const parts = str.split('.');
+      // 对整数部分添加千位逗号
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      // 返回格式化后的字符串
+      return parts.join('.');
+    },
     // 抽离统一的 resize 方法
     handleResize() {
       if (this.myChart4) {
@@ -417,7 +431,7 @@ export default {
 }
 
 .leftl {
-  flex: 0 0 40%; /*学校描述占40%*/ 
+  flex: 0 0 45%; /*学校描述占40%*/ 
   min-width: 0;
   overflow: hidden; /* 核心：防止描述内容溢出导致宽高失控 */
   display: flex;
@@ -463,7 +477,7 @@ export default {
 }
 
 .xiaoyuantu {
-  flex: 0 0 60%;  /*图占60%*/ 
+  flex: 0 0 55%;  /*图占60%*/ 
   min-width: 0;
   display: flex;
   align-items: stretch;
@@ -628,7 +642,7 @@ export default {
 
 /* ---------- 底部区域：左侧表格卡片与右侧柱状图并排 ---------- */
 .carbonon {
-  flex: 0 1 24%; /* 占据 30% 宽度 */
+  flex: 0 1 27%; /* 占据 30% 宽度 */
   min-width: 300px;
   display: flex;
   flex-direction: column;
