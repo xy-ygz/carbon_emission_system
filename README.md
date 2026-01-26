@@ -50,11 +50,11 @@
 | Tomcat | 9.0-jdk8 | 应用服务器 |
 
 ## 📦 一键部署
-![1月20日](https://github.com/user-attachments/assets/d2b7bc74-894f-40e2-85d1-0c289f3eeaa4)
 ### 快速开始
+需要提前安装`docker`及`docker-compose`，安装脚本：`./docker/install-docker.sh `
 
 一键部署脚本，只需执行以下命令：
-
+![1月20日](https://github.com/user-attachments/assets/d2b7bc74-894f-40e2-85d1-0c289f3eeaa4)
 ```bash
 # 进入docker目录
 cd docker
