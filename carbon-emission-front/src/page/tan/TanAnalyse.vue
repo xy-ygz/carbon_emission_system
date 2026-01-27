@@ -763,13 +763,19 @@ export default {
 }
 
 /* 响应式设计 */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .main-content {
     flex-direction: column;
   }
   
   .left-panel {
     flex: 1;
+    width: 100%;
+  }
+  
+  .right-panel {
+    flex: 1;
+    width: 100%;
   }
 }
 </style>

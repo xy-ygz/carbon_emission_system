@@ -588,7 +588,7 @@ export default {
 .filter-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 15px;
   align-items: center;
   justify-content: flex-start;
   margin: 0;
@@ -753,14 +753,40 @@ export default {
   }
 
   .filter-form {
-    flex-direction: column;
-    align-items: stretch;
+    gap: 10px;
   }
 
   .filter-input {
-    width: 100%;
+    width: 130px;
   }
+  
+  /* 按钮组始终在一行，向左对齐 */
+  .button-group {
+    margin-left: 0;
+    white-space: nowrap;
+  }
+}
 
+@media (max-width: 992px) {
+  .filter-form {
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  
+  ::v-deep .el-form-item {
+    margin-right: 0;
+  }
+  
+  .filter-input {
+    width: 120px;
+  }
+  
+  /* 按钮组在中等屏幕上向左对齐 */
+  .button-group {
+    margin-left: 0;
+    flex: none;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 768px) {
@@ -769,9 +795,41 @@ export default {
   }
 
   .filter-form {
+    flex-wrap: wrap;
     gap: 10px;
+    align-items: center;
   }
-
+  
+  ::v-deep .el-form-item {
+    flex: 1 1 calc(33.333% - 7px);
+    min-width: calc(33.333% - 7px);
+    margin-right: 0;
+  }
+  
+  /* 按钮组在小屏幕上保持一行，向左对齐 */
+  .button-group {
+    flex: 1 1 100%;
+    min-width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-top: 5px;
+    white-space: nowrap;
+  }
+  
+  /* 按钮在小屏幕上保持原有间距 */
+  .button-group .el-button {
+    margin: 0 15px 0 0 !important;
+  }
+  
+  /* 输入框在小屏幕上占满宽度 */
+  ::v-deep .el-form-item__content {
+    width: 100%;
+  }
+  
+  .filter-input {
+    width: 100%;
+    min-width: auto;
+  }
 
   .table-container {
     max-height: 350px;
