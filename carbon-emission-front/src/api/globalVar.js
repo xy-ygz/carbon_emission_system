@@ -1,6 +1,6 @@
 export function publicNetworkIpAndPort() {
    // 开发环境：使用完整 URL（或者自己配置proxyTable代理）
-   // return "http://localhost:4432";
+   // return "http://localhost";
    
    // 生产环境：使用相对路径，让浏览器自动使用当前域名
    // nginx 会通过容器名 carbon-backend 代理到后端

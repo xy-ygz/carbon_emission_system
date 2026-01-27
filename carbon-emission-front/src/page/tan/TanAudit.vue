@@ -19,9 +19,6 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item>
-              <el-button size="small" @click="searchBuilding()" type="primary" icon="el-icon-search" class="forest-btn">查询</el-button>
-            </el-form-item>
             <el-form-item label="选择地点：">
               <el-select v-model="value1" multiple @remove-tag="removeTag" placeholder="请选择地点" size="small" class="filter-input" style="width: 200px;">
                 <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item"
@@ -29,10 +26,10 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item>
+            <!-- 按钮组 - 合并到一个表单项中 -->
+            <el-form-item class="button-group">
+              <el-button size="small" @click="searchBuilding()" type="primary" icon="el-icon-search" class="forest-btn">查询</el-button>
               <el-button size="small" @click="resetFilters()" icon="el-icon-refresh" class="reset-btn">重置</el-button>
-            </el-form-item>
-            <el-form-item>
               <el-button size="small" @click="exportData()" icon="el-icon-download" class="export-btn">导出数据</el-button>
             </el-form-item>
           </el-form>
@@ -373,8 +370,19 @@ export default {
           if (res.data.data && res.data.data.length > 0 && res.data.data[0].subPlaceEmissionVos && res.data.data[0].subPlaceEmissionVos.length > 0) {
             this.tableData = res.data.data[0].subPlaceEmissionVos
             // 如果用户选择了年份或月份，显示用户选择的；如果用户没选择，显示后端返回的实际年份和月份
-            this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : res.data.data[0].emissionYear;
-            this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : res.data.data[0].month;
+            const backendYear = res.data.data[0].emissionYear;
+            const backendMonth = res.data.data[0].month;
+            
+            // 回显年份和月份到选择器
+            if (!this.year || this.year === '') {
+              this.year = backendYear ? backendYear.toString() : '';
+            }
+            if (!this.month || this.month === '') {
+              this.month = backendMonth || '';
+            }
+            
+            this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : backendYear;
+            this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : backendMonth;
             this.total = res.data.data[0].subPlaceEmissionVos.length;
             this.calculateStatistics();
           } else {
@@ -383,8 +391,19 @@ export default {
             this.calculateStatistics();
             if (res.data.data && res.data.data.length > 0) {
               // 如果用户选择了年份或月份，显示用户选择的；如果用户没选择，显示后端返回的实际年份和月份
-              this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : (res.data.data[0].emissionYear || '');
-              this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : (res.data.data[0].month || '');
+              const backendYear = res.data.data[0].emissionYear;
+              const backendMonth = res.data.data[0].month;
+              
+              // 回显年份和月份到选择器
+              if (!this.year || this.year === '') {
+                this.year = backendYear ? backendYear.toString() : '';
+              }
+              if (!this.month || this.month === '') {
+                this.month = backendMonth || '';
+              }
+              
+              this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : (backendYear || '');
+              this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : (backendMonth || '');
             }
           }
           // console.log(res.data.total);
@@ -431,8 +450,19 @@ export default {
           if (res.data.data && res.data.data.length > 0 && res.data.data[0].subPlaceEmissionVos && res.data.data[0].subPlaceEmissionVos.length > 0) {
             this.tableData = res.data.data[0].subPlaceEmissionVos
             // 如果用户选择了年份或月份，显示用户选择的；如果用户没选择，显示后端返回的实际年份和月份
-            this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : res.data.data[0].emissionYear;
-            this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : res.data.data[0].month;
+            const backendYear = res.data.data[0].emissionYear;
+            const backendMonth = res.data.data[0].month;
+            
+            // 回显年份和月份到选择器
+            if (!this.year || this.year === '') {
+              this.year = backendYear ? backendYear.toString() : '';
+            }
+            if (!this.month || this.month === '') {
+              this.month = backendMonth || '';
+            }
+            
+            this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : backendYear;
+            this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : backendMonth;
             this.total = res.data.data[0].subPlaceEmissionVos.length;
             this.calculateStatistics();
           } else {
@@ -441,8 +471,19 @@ export default {
             this.calculateStatistics();
             if (res.data.data && res.data.data.length > 0) {
               // 如果用户选择了年份或月份，显示用户选择的；如果用户没选择，显示后端返回的实际年份和月份
-              this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : (res.data.data[0].emissionYear || '');
-              this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : (res.data.data[0].month || '');
+              const backendYear = res.data.data[0].emissionYear;
+              const backendMonth = res.data.data[0].month;
+              
+              // 回显年份和月份到选择器
+              if (!this.year || this.year === '') {
+                this.year = backendYear ? backendYear.toString() : '';
+              }
+              if (!this.month || this.month === '') {
+                this.month = backendMonth || '';
+              }
+              
+              this.carbonInformationIn.year = (this.year && this.year != '') ? this.year : (backendYear || '');
+              this.carbonInformationIn.month = (this.month && this.month != '') ? this.month : (backendMonth || '');
             }
           }
           // console.log(res.data.total);
@@ -541,7 +582,7 @@ export default {
 }
 
 .filter-content {
-  padding: 20px;
+  padding: 15px;
 }
 
 .filter-form {
@@ -549,10 +590,21 @@ export default {
   flex-wrap: wrap;
   gap: 20px;
   align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+}
+
+/* 表单项容器样式 - 减小上下间距 */
+::v-deep .el-form-item {
+  margin-bottom: 0 !important;
+  margin-right: 0 !important;
+  padding: 0;
+  height: auto;
 }
 
 .filter-input {
   width: 120px;
+  min-width: 100px;
 }
 
 .reset-btn {
@@ -575,6 +627,33 @@ export default {
 .export-btn:hover {
   background-color: #73d13d;
   border-color: #73d13d;
+}
+
+/* 按钮组样式 - 确保按钮在一行内排列 */
+.button-group {
+  display: flex;
+  gap: 15px; /* 保持原有的间距 */
+  align-items: center;
+  margin-left: 0; /* 向左对齐 */
+  padding: 0;
+  white-space: nowrap; /* 防止换行 */
+}
+
+/* 按钮组内部的表单项样式 */
+.button-group ::v-deep .el-form-item__content {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 15px; /* 保持原有的间距 */
+  white-space: nowrap; /* 防止换行 */
+}
+
+/* 单个按钮样式 - 保持原有的间距 */
+.button-group .el-button {
+  margin: 0 !important;
+  height: 32px;
+  padding: 0 15px; /* 保持原有的内边距 */
+  font-size: 14px;
 }
 
 /* 数据展示区域 */

@@ -241,9 +241,13 @@ export default {
       return request.get("/api/carbonEmission/collegeCarbonEmission", { params }).then((res) => {
         if (res.data && res.data.code == 200) {
           this.presentValue = parseFloat(res.data.data.totalEmission || 0);
-          // 如果后端返回了actualYear，更新显示的年份
+          // 如果后端返回了actualYear，更新显示的年份并回显到选择器
           if (res.data.data.actualYear) {
             this.displayYear = res.data.data.actualYear.toString();
+            // 回显年份到选择器
+            if (!this.searchYear || this.searchYear === '') {
+              this.searchYear = res.data.data.actualYear.toString();
+            }
           } else if (this.searchYear && this.searchYear !== '') {
             this.displayYear = this.searchYear;
           } else {
@@ -305,6 +309,10 @@ export default {
               
               if (res.data.data.actualYear) {
                 this.displayYear = res.data.data.actualYear.toString();
+                // 回显年份到选择器
+                if (!this.searchYear || this.searchYear === '') {
+                  this.searchYear = res.data.data.actualYear.toString();
+                }
               }
               
               if (this.searchMonth && this.searchMonth !== '') {
@@ -449,7 +457,7 @@ export default {
 }
 
 .filter-content {
-  padding: 20px;
+  padding: 15px;
 }
 
 .filter-form {

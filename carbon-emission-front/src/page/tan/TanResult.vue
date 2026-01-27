@@ -687,9 +687,11 @@ export default {
           if (res.data.code == 200) {
             // 处理返回的数据（可能是list字段或直接是数组）
             var dataList = res.data.data.list || res.data.data;
-            // 如果后端返回了actualYear，更新显示的年份
+            // 如果后端返回了actualYear，更新显示的年份并回显到选择器
             if (res.data.data.actualYear) {
               this.year = res.data.data.actualYear;
+              // 回显年份到选择器
+              this.showYear = res.data.data.actualYear.toString();
             }
             // 开始画桑葚图
             this.initSankeyChart(dataList);
@@ -846,7 +848,6 @@ export default {
   background-color: var(--forest-bg-primary);
   text-align: left;
   margin: 0;
-  padding: 20px;
   box-sizing: border-box;
   min-height: auto;
 }
@@ -866,7 +867,7 @@ export default {
 }
 
 .filter-content {
-  padding: 20px;
+  padding: 15px;
 }
 
 .filter-form {

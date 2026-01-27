@@ -7,6 +7,7 @@ import com.bjfu.carbon.service.CarbonEmissionService;
 import com.bjfu.carbon.service.SchoolService;
 import com.bjfu.carbon.strategy.ExportStrategy;
 import com.bjfu.carbon.utils.XWPFUtils;
+import com.bjfu.carbon.vo.EmissionMulberryVo;
 import com.bjfu.carbon.vo.MulberryDiagramVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -22,7 +23,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -398,7 +402,7 @@ public class WordExportStrategy implements ExportStrategy {
     private List<Table3Row> buildTable3Rows(List<MulberryDiagramVo> mulberryList) {
         List<Table3Row> table3Rows = new ArrayList<>();
         for (MulberryDiagramVo mulberry : mulberryList) {
-            for (com.bjfu.carbon.vo.EmissionMulberryVo emissionVo : mulberry.getEmissionTypeAmount()) {
+            for (EmissionMulberryVo emissionVo : mulberry.getEmissionTypeAmount()) {
                 Table3Row row = new Table3Row();
                 row.emissionType = getEmissionTypeName(emissionVo.getEmissionType());
                 row.name = mulberry.getObjectCategory();
