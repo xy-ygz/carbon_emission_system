@@ -256,6 +256,19 @@ export default {
 
 </script>
 <style>
+/* 统一所有输入组件的高度 */
+.el-input__inner {
+  height: 32.5px;
+}
+
+/* 确保所有按钮高度与输入框一致 */
+::v-deep .energyleft .el-button--small,
+::v-deep .energyright .el-button--small {
+  height: 32.5px;
+  padding: 9px 15px;
+  line-height: 1;
+}
+
 .cell {
   text-align: center;
 }
@@ -266,8 +279,7 @@ export default {
 }
 
 .energyright {
-  vertical-align: top !important;
-  margin-bottom: 19px;
+  vertical-align: middle !important;
 }
 
 .el-table__body tr:hover>td {

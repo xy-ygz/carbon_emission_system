@@ -2,6 +2,8 @@ package com.bjfu.carbon.utils;
 
 import com.bjfu.carbon.domain.CarbonEmission;
 import com.bjfu.carbon.domain.EmissionAndConsume;
+import com.bjfu.carbon.vo.EmissionMulberryVo;
+import com.bjfu.carbon.vo.MulberryDiagramVo;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -617,7 +619,7 @@ public class XWPFUtils {
      * @throws Exception 处理异常
      */
     public static void createInventoryChartToWord(XWPFDocument document, 
-                                                   List<com.bjfu.carbon.vo.MulberryDiagramVo> mulberryList, 
+                                                   List<MulberryDiagramVo> mulberryList,
                                                    int year) throws Exception {
         createInventoryChartWithGraphics2D(document, mulberryList, year);
     }
@@ -631,7 +633,7 @@ public class XWPFUtils {
      * @throws Exception 处理异常
      */
     private static void createInventoryChartWithGraphics2D(XWPFDocument document, 
-                                                           List<com.bjfu.carbon.vo.MulberryDiagramVo> mulberryList, 
+                                                           List<MulberryDiagramVo> mulberryList,
                                                            int year) throws Exception {
         // 确保字体已加载（处理Docker volume挂载延迟的情况）
         ensureFontLoaded();
@@ -707,7 +709,7 @@ public class XWPFUtils {
      * @param mulberryList 桑基图数据列表
      * @return 整理后的桑基图数据
      */
-    private static SankeyData collectSankeyData(List<com.bjfu.carbon.vo.MulberryDiagramVo> mulberryList) {
+    private static SankeyData collectSankeyData(List<MulberryDiagramVo> mulberryList) {
         SankeyData data = new SankeyData();
         data.categories = new LinkedHashSet<>();
         data.categoryToEmissionType = new HashMap<>();
@@ -716,11 +718,11 @@ public class XWPFUtils {
         data.emissionTypeCodes = new int[]{2, 0, 1};
         
         // 收集分类和排放类型数据
-        for (com.bjfu.carbon.vo.MulberryDiagramVo mulberry : mulberryList) {
+        for (MulberryDiagramVo mulberry : mulberryList) {
             String category = mulberry.getObjectCategory();
             data.categories.add(category);
             Map<Integer, Double> emissionMap = new HashMap<>();
-            for (com.bjfu.carbon.vo.EmissionMulberryVo emissionVo : mulberry.getEmissionTypeAmount()) {
+            for (EmissionMulberryVo emissionVo : mulberry.getEmissionTypeAmount()) {
                 double amountT = (emissionVo.getEmissionAmount() != null ? emissionVo.getEmissionAmount() : 0.0) / 1000.0;
                 emissionMap.put(emissionVo.getEmissionType(), amountT);
             }

@@ -12,85 +12,108 @@
           </div>
           <div class="system-title">碳排放核算与管理系统</div>
         </div>
-        <div class="right">
-          
-        <el-menu router class="tan-el-menu" mode="horizontal">
-          <el-menu-item index="/Tan/TanPage" class="header-icon el-icon-s-home" style="font-size: 20px;">
-            首页</el-menu-item>
-          <el-submenu index="1">
-            <template slot="title">
-              <i class="header-icon el-icon-s-data"></i>
-              <span>数据输入</span>
+        <div class="right" ref="menuContainer">
+          <!-- 桌面端菜单 -->
+          <el-menu router class="tan-el-menu" mode="horizontal" ref="mainMenu">
+            <!-- 动态菜单项 -->
+            <template v-for="(item, index) in menuItems">
+              <!-- 普通菜单项 -->
+              <el-menu-item 
+                v-if="!item.isSubmenu" 
+                :key="index" 
+                :index="item.index" 
+                :class="item.className" 
+                :style="item.style" 
+                :ref="item.ref">
+                <i v-if="item.icon" :class="item.icon"></i>
+                {{ item.text }}
+              </el-menu-item>
+              <!-- 下拉菜单项 -->
+              <el-submenu 
+                v-else 
+                :key="index" 
+                :index="item.index" 
+                :ref="item.ref" 
+                class="menu-item-original">
+                <template slot="title">
+                  <i v-if="item.icon" :class="item.icon"></i>
+                  <span>{{ item.text }}</span>
+                </template>
+                <el-menu-item-group>
+                  <el-menu-item 
+                    v-for="(subItem, subIndex) in item.subItems" 
+                    :key="subIndex" 
+                    :index="subItem.index" 
+                    :class="subItem.className" 
+                    :style="subItem.style"
+                    @click="subItem.onClick">
+                    <i v-if="subItem.icon" :class="subItem.icon"></i>
+                    {{ subItem.text }}
+                  </el-menu-item>
+                </el-menu-item-group>
+              </el-submenu>
             </template>
-            <el-menu-item-group>
-              <el-menu-item index="/Tan/ManageSchool" class="el-icon-school"
-                style="font-size: 16px;">&nbsp;&nbsp;学校信息</el-menu-item>
-              <el-menu-item index="/Tan/ManagePlace" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;排放地点</el-menu-item>
-              <el-menu-item index="/Tan/ExchangeSetting" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;碳排放转化系数</el-menu-item>
-              <el-menu-item @click="jumpCarbon()" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;碳排放记录</el-menu-item>
-            </el-menu-item-group>
-          </el-submenu>
-          <el-submenu index="2">
-            <template slot="title">
-              <i class="header-icon el-icon-s-flag"></i>
-              <span>能耗监测</span>
-            </template>
-            <el-menu-item-group>
-              <el-menu-item index="/Tan/TanMonitor" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;能耗碳排放监测</el-menu-item>
-              <el-menu-item index="/Tan/TanAudit" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;能耗碳排放审计</el-menu-item>
-              <el-menu-item index="/Tan/TanContrast" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;能耗碳排放对比</el-menu-item>
-            </el-menu-item-group>
-          </el-submenu>
-          <el-submenu index="3">
-            <template slot="title">
-              <i class="header-icon el-icon-s-data"></i>
-              <span>碳排放计算与减碳分析</span>
-            </template>
-            <el-menu-item-group>
-              <el-menu-item index="/Tan/TanResult" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;流动趋势</el-menu-item>
-              <el-menu-item index="/Tan/TanAnalyse" class="el-icon-location"
-                style="font-size: 16px;">&nbsp;&nbsp;减碳分析</el-menu-item>
-            </el-menu-item-group>
-          </el-submenu>
 
-          <el-menu-item index="/Tan/TanExport" class="header-icon el-icon-s-order"
-            style="font-size: 20px;">报告生成</el-menu-item>
+            <!-- 更多菜单 -->
+            <el-submenu 
+              index="more" 
+              ref="moreMenu" 
+              v-if="overflowItems.length > 0" 
+              class="menu-item-original">
+              <template slot="title">
+                <i class="header-icon el-icon-more"></i>
+                <span>更多</span>
+              </template>
+              <el-menu-item-group>
+                <template v-for="(item, index) in overflowItems">
+                  <!-- 普通溢出菜单项 -->
+                  <el-menu-item 
+                    v-if="!item.isSubmenu" 
+                    :key="index" 
+                    :index="item.index" 
+                    :class="item.className" 
+                    :style="item.style">
+                    <i v-if="item.icon" :class="item.icon"></i>
+                    {{ item.text }}
+                  </el-menu-item>
+                  <!-- 下拉溢出菜单项 - 平铺显示 -->
+                  <template v-else>
+                    <!-- 父菜单项作为分隔标题 -->
+                    <div 
+                      :key="`${index}-header`"
+                      style="padding: 0 12px; line-height: 36px; color: #909399; font-size: 14px; font-weight: 500;">
+                      <i v-if="item.icon" :class="item.icon"></i>
+                      <span style="margin-left: 8px;">{{ item.text }}</span>
+                    </div>
+                    <!-- 平铺显示所有子菜单项 -->
+                    <el-menu-item 
+                      v-for="(subItem, subIndex) in item.subItems" 
+                      :key="`${index}-${subIndex}`" 
+                      :index="subItem.index" 
+                      :class="subItem.className" 
+                      :style="subItem.style"
+                      @click="subItem.onClick">
+                      <i v-if="subItem.icon" :class="subItem.icon"></i>
+                      <span style="margin-left: 8px;">{{ subItem.text }}</span>
+                    </el-menu-item>
+                  </template>
+                </template>
+              </el-menu-item-group>
+            </el-submenu>
 
-          <el-submenu index="4">
-            <template slot="title">
-              <i class="header-icon el-icon-setting"></i>
-              <span style="font-size: 20px;">系统管理</span>
-            </template>
-            <el-menu-item-group>
-              <el-menu-item index="/Tan/ManageUser" class="el-icon-user"
-                style="font-size: 16px;">&nbsp;&nbsp;用户管理</el-menu-item>
-              <el-menu-item index="/Tan/ManageRole" class="el-icon-s-custom"
-                style="font-size: 16px;">&nbsp;&nbsp;角色管理</el-menu-item>
-              <el-menu-item index="/Tan/ManagePermission" class="el-icon-key"
-                style="font-size: 16px;">&nbsp;&nbsp;权限管理</el-menu-item>
-            </el-menu-item-group>
-          </el-submenu>
-
-          <div class="avatar">
-            <el-dropdown @command="handleCommand" placement="bottom" trigger="hover" popper-class="user-dropdown-menu">
-              <span class="user-img-icon">
-                <i class="el-icon-user-solid"></i>
-              </span>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item v-if="isLogin === 'youke'" command="login">登录</el-dropdown-item>
-                <el-dropdown-item v-else command="signout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
-          </div>
-
-        </el-menu>
+            <div class="avatar" ref="avatarRef">
+              <el-dropdown @command="handleCommand" placement="bottom" trigger="hover" popper-class="user-dropdown-menu">
+                <span class="user-img-icon">
+                  <i class="el-icon-user-solid"></i>
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-if="isLogin === 'youke'" command="login">登录</el-dropdown-item>
+                  <el-dropdown-item v-else command="signout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
+          </el-menu>
+        
         </div>
       </div>
     </div>
@@ -108,11 +131,33 @@ import tokenManager from '../utils/tokenManager'
 export default {
   name: 'TanTotal',
   data() {
-    return {
-      loginForm: false,
-      isLogin: 'youke',
-      logoUrl: require('../assets/bjfu-logo.png')
-    }
+      return {
+        loginForm: false,
+        isLogin: 'youke',
+        logoUrl: require('../assets/bjfu-logo.png'),
+        // 智能响应式菜单相关状态
+        overflowMenuVisible: false,
+        overflowItems: [],
+        originalItems: [],
+        menuWidth: 0,
+        containerWidth: 0,
+        menuContainer: null,
+        menuItems: [],
+        moreMenuRef: null,
+        isCalculating: false
+      }
+    },
+  mounted() {
+    // 初始化导航菜单数据
+    this.initMenuItems()
+    // 获取DOM引用
+    this.menuContainer = this.$refs.menuContainer
+    // 等待DOM更新完成后初始化
+    this.$nextTick(() => {
+      this.calculateMenuWidth()
+      // 添加窗口大小变化监听
+      window.addEventListener('resize', this.handleResize)
+    })
   },
   props: {
   },
@@ -122,12 +167,257 @@ export default {
     })
     this.checkLoginStatus()
   },
+  beforeDestroy() {
+    // 移除窗口大小变化监听
+    window.removeEventListener('resize', this.handleResize)
+  },
   watch: {
     '$route'() {
-      this.checkLoginStatus()
+      this.checkLoginStatus();
     }
   },
   methods: {
+    // ========== 智能响应式菜单相关方法 ==========
+    // 初始化菜单项数据
+    initMenuItems() {
+      this.originalItems = [
+        // 首页
+        {
+          index: '/Tan/TanPage',
+          text: '首页',
+          icon: '',
+          className: 'header-icon el-icon-s-home menu-item-original',
+          style: 'font-size: 20px;',
+          ref: 'menuItem0',
+          isSubmenu: false
+        },
+        // 数据输入
+        {
+          index: '1',
+          text: '数据输入',
+          icon: 'header-icon el-icon-s-data',
+          className: 'menu-item-original',
+          ref: 'menuItem1',
+          isSubmenu: true,
+          subItems: [
+            {
+              index: '/Tan/ManageSchool',
+              text: '学校信息',
+              icon: '',
+              className: 'el-icon-school',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/ManagePlace',
+              text: '排放地点',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/ExchangeSetting',
+              text: '碳排放转化系数',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '',
+              text: '碳排放记录',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: this.jumpCarbon
+            }
+          ]
+        },
+        // 能耗监测
+        {
+          index: '2',
+          text: '能耗监测',
+          icon: 'header-icon el-icon-s-flag',
+          className: 'menu-item-original',
+          ref: 'menuItem2',
+          isSubmenu: true,
+          subItems: [
+            {
+              index: '/Tan/TanMonitor',
+              text: '能耗碳排放监测',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/TanAudit',
+              text: '能耗碳排放审计',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/TanContrast',
+              text: '能耗碳排放对比',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            }
+          ]
+        },
+        // 碳排放计算与减碳分析
+        {
+          index: '3',
+          text: '碳排放计算与减碳分析',
+          icon: 'header-icon el-icon-s-data',
+          className: 'menu-item-original',
+          ref: 'menuItem3',
+          isSubmenu: true,
+          subItems: [
+            {
+              index: '/Tan/TanResult',
+              text: '流动趋势',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/TanAnalyse',
+              text: '减碳分析',
+              icon: '',
+              className: 'el-icon-location',
+              style: 'font-size: 16px;',
+              onClick: null
+            }
+          ]
+        },
+        // 报告生成
+        {
+          index: '/Tan/TanExport',
+          text: '报告生成',
+          icon: '',
+          className: 'header-icon el-icon-s-order menu-item-original',
+          style: 'font-size: 20px;',
+          ref: 'menuItem4',
+          isSubmenu: false
+        },
+        // 系统管理
+        {
+          index: '4',
+          text: '系统管理',
+          icon: 'header-icon el-icon-setting',
+          className: 'menu-item-original',
+          style: 'font-size: 20px;',
+          ref: 'menuItem5',
+          isSubmenu: true,
+          subItems: [
+            {
+              index: '/Tan/ManageUser',
+              text: '用户管理',
+              icon: '',
+              className: 'el-icon-user',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/ManageRole',
+              text: '角色管理',
+              icon: '',
+              className: 'el-icon-s-custom',
+              style: 'font-size: 16px;',
+              onClick: null
+            },
+            {
+              index: '/Tan/ManagePermission',
+              text: '权限管理',
+              icon: '',
+              className: 'el-icon-key',
+              style: 'font-size: 16px;',
+              onClick: null
+            }
+          ]
+        }
+      ]
+      // 初始时所有菜单项都显示
+      this.menuItems = [...this.originalItems]
+      this.overflowItems = []
+    },
+    
+    // 计算菜单宽度和检测溢出
+    calculateMenuWidth() {
+      if (!this.menuContainer || this.isCalculating) return
+      
+      this.isCalculating = true
+      
+      // 重置所有菜单项
+      this.menuItems = [...this.originalItems]
+      this.overflowItems = []
+      
+      // 获取容器宽度（减去logo和系统标题的宽度）
+      const containerRect = this.menuContainer.getBoundingClientRect()
+      const carbonleftDom = this.$el.querySelector('.carbonleft')
+      const carbonleftRect = carbonleftDom ? carbonleftDom.getBoundingClientRect() : { width: 300 }
+      this.containerWidth = containerRect.width - carbonleftRect.width
+      
+      // 获取更多菜单的宽度
+      const moreMenuWidth = 100 // 估算的更多菜单宽度
+      
+      // 获取所有菜单项的DOM元素
+      const menuItemsDOM = this.$refs.mainMenu && this.$refs.mainMenu.$el ? 
+        this.$refs.mainMenu.$el.querySelectorAll('.el-menu-item, .el-submenu') : 
+        []
+      
+      let totalWidth = 0
+      const itemWidths = []
+      
+      // 计算所有菜单项的宽度
+      menuItemsDOM.forEach((item, index) => {
+        if (index < this.originalItems.length) { // 排除更多菜单
+          const rect = item.getBoundingClientRect()
+          itemWidths.push(rect.width)
+          totalWidth += rect.width
+        }
+      })
+      
+      // 检查是否溢出
+      if (totalWidth > this.containerWidth - moreMenuWidth) {
+        // 从右往左移动菜单项到溢出列表，直到总宽度合适
+        let overflowIndex = itemWidths.length - 1
+        let overflowTotal = 0
+        
+        while (overflowIndex >= 0 && (totalWidth + moreMenuWidth - overflowTotal) > this.containerWidth) {
+          overflowTotal += itemWidths[overflowIndex]
+          overflowIndex--
+        }
+        
+        // 计算溢出的菜单项数量
+        const overflowCount = itemWidths.length - (overflowIndex + 1)
+        
+        if (overflowCount > 0) {
+          // 更新显示的菜单项和溢出菜单项
+          this.menuItems = this.originalItems.slice(0, overflowIndex + 1)
+          this.overflowItems = this.originalItems.slice(overflowIndex + 1)
+        }
+      }
+      
+      this.isCalculating = false
+    },
+    
+    // 处理窗口大小变化
+    handleResize() {
+      // 使用防抖，避免频繁计算
+      clearTimeout(this.resizeTimer)
+      this.resizeTimer = setTimeout(() => {
+        this.calculateMenuWidth()
+      }, 100)
+    },
+    
+    // ========== 原有方法 ==========
     checkLoginStatus() {
       const token = tokenManager.getAccessToken()
       const auth = localStorage.getItem('auth')
@@ -192,7 +482,7 @@ export default {
       //4.利用消息订阅与发布
       // this.loginForm = value
       // pubsub.publish('sendLoginForm', value)
-    }
+    },
   },
 
   beforeDestroy() {
@@ -230,6 +520,13 @@ export default {
   padding: 0 40px;
   box-sizing: border-box;
   box-shadow: 0 2px 12px rgba(45, 80, 22, 0.15);
+}
+
+/* 响应式：移动端header */
+@media (max-width: 1200px) {
+  .header {
+    padding: 0 15px;
+  }
 }
 
 .child {
@@ -297,16 +594,23 @@ export default {
   flex: 1;
   flex-shrink: 1;
   min-width: 0;
-  vertical-align: top;
-  text-align: right;
+  position: relative;
   display: flex;
-  justify-content: flex-end; /* 改为靠右对齐 */
   align-items: center;
+  justify-content: flex-end;
   overflow: visible;
   margin-left: 0;
   gap: 25px; /* 系统标题和导航菜单之间的间距 */
-  /* padding-left: 20px; */
   padding-right: 0; /* 确保右侧没有内边距 */
+}
+
+/* 响应式：小屏幕时调整right容器 */
+@media (max-width: 1200px) {
+  .right {
+    justify-content: flex-end;
+    overflow: visible;
+    gap: 10px;
+  }
 }
 
 /* Logo 容器 */
@@ -701,6 +1005,32 @@ div.right ul li.el-menu-item,
   margin-left: auto !important; /* 自动左边距，推动菜单靠右 */
 }
 
+/* 响应式：小屏幕时隐藏桌面菜单 */
+@media (max-width: 1200px) {
+  .tan-el-menu.desktop-menu {
+    display: none !important;
+  }
+}
+
+/* 响应式：中等屏幕时开始隐藏部分菜单项 */
+@media (max-width: 1400px) {
+  .tan-el-menu .el-submenu:nth-child(3) .el-submenu__title span {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .tan-el-menu .el-submenu:nth-child(3) .el-submenu__title span {
+    font-size: 14px !important;
+  }
+  
+  .tan-el-menu .el-menu-item,
+  .tan-el-menu .el-submenu__title {
+    padding: 0 8px !important;
+    font-size: 16px !important;
+  }
+}
+
 .tan-el-menu .el-menu-item,
 .tan-el-menu .el-submenu__title {
   color: rgba(255, 255, 255, 0.9) !important;
@@ -899,5 +1229,244 @@ div.right ul li.el-menu-item.is-active::after,
 .el-menu-item.header-icon.is-active::after,
 .el-menu-item.el-icon-s-home.is-active::after {
   display: none !important;
+}
+
+/* ==================== 响应式折叠菜单 ==================== */
+
+/* 汉堡菜单按钮 */
+.hamburger-menu {
+  display: none !important; /* 默认隐藏 */
+  cursor: pointer;
+  color: white !important;
+  font-size: 28px !important;
+  padding: 8px 12px !important;
+  margin-left: 10px;
+  transition: transform 0.3s ease;
+  z-index: 1001 !important;
+  position: relative;
+  flex-shrink: 0;
+  line-height: 1;
+  align-self: center;
+  background: transparent;
+  border: none;
+}
+
+.hamburger-menu i {
+  transition: transform 0.3s ease;
+}
+
+.hamburger-menu i.is-active {
+  transform: rotate(90deg);
+}
+
+/* 移动端菜单容器 */
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  border-top: 1px solid #e8e8e8;
+}
+
+/* 移动端菜单样式 */
+.mobile-el-menu {
+  border: none !important;
+  background: white !important;
+}
+
+.mobile-el-menu .el-menu-item,
+.mobile-el-menu .el-submenu__title {
+  height: 50px !important;
+  line-height: 50px !important;
+  color: #1a3d0d !important;
+  font-size: 16px !important;
+  padding-left: 20px !important;
+}
+
+.mobile-el-menu .el-menu-item:hover,
+.mobile-el-menu .el-submenu__title:hover {
+  background: #f0f7ed !important;
+  color: #4a7c3a !important;
+}
+
+.mobile-el-menu .el-menu-item.is-active {
+  background: #e8f5e3 !important;
+  color: #4a7c3a !important;
+  border-left: 3px solid #4a7c3a !important;
+}
+
+.mobile-el-menu .el-submenu .el-menu-item {
+  padding-left: 40px !important;
+  font-size: 14px !important;
+}
+
+.mobile-avatar {
+  padding: 15px 20px;
+  border-top: 1px solid #e8e8e8;
+  text-align: center;
+}
+
+.mobile-avatar .user-img-icon {
+  color: #4a7c3a;
+  font-size: 32px;
+}
+
+/* 菜单动画 */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.slide-down-enter,
+.slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* 智能响应式菜单过渡效果 */
+/* 菜单项添加和移除动画 */
+.tan-el-menu .el-menu-item,
+.tan-el-menu .el-submenu {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 菜单项隐藏时的过渡效果 */
+.tan-el-menu .el-menu-item.hidden,
+.tan-el-menu .el-submenu.hidden {
+  opacity: 0;
+  transform: translateX(10px);
+  pointer-events: none;
+}
+
+/* 更多菜单的显示和隐藏动画 */
+.tan-el-menu .el-submenu.index-more {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tan-el-menu .el-submenu.index-more.hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+/* 菜单项宽度变化的过渡效果 */
+.tan-el-menu .el-menu-item,
+.tan-el-menu .el-submenu__title {
+  transition: padding 0.3s ease, width 0.3s ease;
+}
+
+/* 溢出菜单项的动画效果 */
+.overflow-item-enter-active,
+.overflow-item-leave-active {
+  transition: all 0.3s ease;
+}
+
+.overflow-item-enter,
+.overflow-item-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 菜单容器的过渡效果 */
+.tan-el-menu {
+  transition: width 0.3s ease;
+}
+
+/* 响应式：平板和移动端 */
+@media (max-width: 1200px) {
+  /* 显示汉堡菜单，隐藏桌面菜单 - 使用更具体的选择器 */
+  .total .header .header-content .right .hamburger-menu,
+  .right .hamburger-menu,
+  .hamburger-menu {
+    display: block !important;
+    z-index: 1001 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .total .header .header-content .right .desktop-menu,
+  .right .desktop-menu,
+  .desktop-menu {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  .total .header .header-content .right .mobile-menu,
+  .right .mobile-menu,
+  .mobile-menu {
+    display: block !important;
+  }
+  
+  /* 隐藏桌面端头像，在移动菜单中显示 */
+  .right .avatar {
+    display: none !important;
+  }
+  
+  /* 确保right容器在小屏幕时能正确显示汉堡菜单 */
+  .right {
+    min-width: 50px !important; /* 确保有足够空间显示汉堡菜单 */
+  }
+  
+  /* 强制隐藏所有桌面菜单项 */
+  .tan-el-menu.desktop-menu,
+  .tan-el-menu.desktop-menu * {
+    display: none !important;
+  }
+}
+
+/* 响应式：移动端 */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 10px;
+  }
+  
+  .carbonleft {
+    gap: 10px !important;
+  }
+  
+  .system-title {
+    font-size: 18px !important;
+    margin-left: 10px !important;
+  }
+  
+  .title-main {
+    font-size: 20px !important;
+  }
+  
+  .title-sub {
+    font-size: 18px !important;
+  }
+}
+
+/* 桌面端：隐藏移动菜单 */
+@media (min-width: 1201px) {
+  .hamburger-menu {
+    display: none !important;
+  }
+  
+  .mobile-menu {
+    display: none !important;
+  }
+  
+  .desktop-menu {
+    display: flex !important;
+  }
+  
+  .right .avatar {
+    display: block !important;
+  }
 }
 </style>

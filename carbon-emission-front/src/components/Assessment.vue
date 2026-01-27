@@ -53,11 +53,19 @@ export default {
       };
       window.addEventListener('resize', this._resizeHandler);
 
+      // 使用传入的配置或默认值（恢复原始样式）
+      const chartCenter = this.center && this.center.length >= 2 ? this.center : ['35%', '50%'];
+      const chartRadius = ['45%', '75%'];
+      const legendRight = this.legendRight != null ? this.legendRight : '10%';
+      const labelPosition = 'outside';
+      const labelLineLength = 15;
+      const labelLineLength2 = 10;
+
       // 绘制图表
       var haveValueOption = {
         legend: {
           orient: 'vertical',
-          right: this.legendRight != null ? this.legendRight : '10%',
+          right: legendRight,
           top: 'middle',
           data: this.x,
           textStyle: {
@@ -86,20 +94,22 @@ export default {
         series: [{
           name: '碳排放量占比',
           type: 'pie',
-          radius: ['45%', '75%'],
-          center: this.center && this.center.length >= 2 ? this.center : ['35%', '50%'],
+          radius: chartRadius,
+          center: chartCenter,
           barWidth: '10%',
           data: value,
           label: {
             show: true,
-            position: 'outside',
+            position: labelPosition,
             formatter: `{d}%`,
             fontSize: 12
           },
           labelLine: {
-            length: 15,
-            length2: 10
-          }
+            length: labelLineLength,
+            length2: labelLineLength2
+          },
+          // 避免标签重叠
+          avoidLabelOverlap: true
         }]
       };
 
@@ -117,6 +127,7 @@ export default {
       if (chartDom) {
         let myChart = this.$echarts.getInstanceByDom(chartDom);
         if (myChart) {
+          // 简单的resize，不改变配置
           myChart.resize();
         }
       }

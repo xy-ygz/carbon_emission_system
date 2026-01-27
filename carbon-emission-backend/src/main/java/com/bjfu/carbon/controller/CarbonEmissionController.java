@@ -37,9 +37,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -161,14 +163,15 @@ public class CarbonEmissionController {
      * 通过该接口将得到每年的不同楼宇对应的碳排放（折线图）
      * @param year 年份（可为空，为空时使用实际年份）
      * @param area 是否计算地均排放（true：地均排放，false：总排放）
-     * @param buildings 楼宇名称（暂未使用）
+     * @param buildings 楼宇名称（可为空，多个楼宇用逗号分隔或作为数组传递）
      * @return 楼宇碳排放数据列表
      */
     @RateLimit(ipLimit = 5, apiLimit = 100)
     @GetMapping("/listBuildingCarbonLine")
-    public Object listBuildingCarbon(Integer year, boolean area, String... buildings) {
+    public Object listBuildingCarbon(Integer year, boolean area, String buildings) {
         int actualYear = year == null ? CarbonUtils.getInstance().getActualYear() : year;
-        return carbonEmissionService.getBuildingCarbonLineData(actualYear, area);
+        List<String> buildingList = parseBuildings(buildings);
+        return carbonEmissionService.getBuildingCarbonLineData(actualYear, area, buildingList);
     }
 
     /**
@@ -176,12 +179,12 @@ public class CarbonEmissionController {
      * @param year 年份（可为空，为空时使用实际年份）
      * @param month 月份（可为空，为空时使用当前月份）
      * @param area 是否计算地均排放（true：地均排放，false：总排放）
-     * @param buildings 楼宇名称（暂未使用）
+     * @param buildings 楼宇名称（可为空，多个楼宇用逗号分隔或作为数组传递）
      * @return 楼宇碳排放数据列表
      */
     @RateLimit(ipLimit = 5, apiLimit = 100)
     @GetMapping("/listBuildingCarbonBar")
-    public Object listBuildingCarbon1(Integer year, Integer month, boolean area, String... buildings){
+    public Object listBuildingCarbon1(Integer year, Integer month, boolean area, String buildings){
         // 年月要么都为空，要么都不为空
         if ((year == null && month != null) || (year != null && month == null)) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "年份或者月份未选择！");
@@ -189,19 +192,20 @@ public class CarbonEmissionController {
 
         int actualYear = year != null ? year : CarbonUtils.getInstance().getActualYear();
         int actualMonth = month != null ? month : LocalDate.now().getMonthValue();
-        return carbonEmissionService.getBuildingCarbonBarData(actualYear, actualMonth, area);
+        List<String> buildingList = parseBuildings(buildings);
+        return carbonEmissionService.getBuildingCarbonBarData(actualYear, actualMonth, area, buildingList);
     }
 
     /**
      * 通过该接口将得到每年的不同楼宇的电耗，建筑面积、碳排放量、单位面积排放量
      * @param year 年份（可为空，为空时使用实际年份）
      * @param month 月份（可为空，为空时使用当前月份）
-     * @param buildings 楼宇名称（暂未使用）
+     * @param buildings 楼宇名称（可为空，多个楼宇用逗号分隔或作为数组传递）
      * @return 楼宇信息数据列表
      */
     @RateLimit(ipLimit = 5, apiLimit = 100)
     @GetMapping("/listBuildingInfo")
-    public Object listBuildingInfo(Integer year, Integer month, String... buildings){
+    public Object listBuildingInfo(Integer year, Integer month, String buildings){
         // 年月要么都为空，要么都不为空
         if ((year == null && month != null) || (year != null && month == null)) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR, "年份或者月份未选择！");
@@ -209,7 +213,8 @@ public class CarbonEmissionController {
 
         int actualYear = year != null ? year : CarbonUtils.getInstance().getActualYear();
         int actualMonth = month != null ? month : LocalDate.now().getMonthValue();
-        return carbonEmissionService.getBuildingInfoData(actualYear, actualMonth);
+        List<String> buildingList = parseBuildings(buildings);
+        return carbonEmissionService.getBuildingInfoData(actualYear, actualMonth, buildingList);
     }
 
     /**
@@ -530,6 +535,23 @@ public class CarbonEmissionController {
                 log.error("写入错误响应失败", ioException);
             }
         }
+    }
+
+    /**
+     * 解析楼宇名称参数
+     * 将逗号分隔的字符串转换为楼宇名称列表，并去除前后空格
+     * @param buildings 楼宇名称字符串（可为空，多个楼宇用逗号分隔）
+     * @return 楼宇名称列表，如果输入为空则返回null
+     */
+    private List<String> parseBuildings(String buildings) {
+        if (buildings == null || buildings.trim().isEmpty()) {
+            return null;
+        }
+        return Arrays.asList(buildings.split(","))
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 
 }

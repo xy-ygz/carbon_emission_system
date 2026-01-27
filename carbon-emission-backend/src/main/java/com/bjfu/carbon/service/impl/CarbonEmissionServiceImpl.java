@@ -98,11 +98,11 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
     }
 
     @Override
-    public List<CarbonEmission> selectAllCarbonEmission(int year, Integer month) {
+    public List<CarbonEmission> selectAllCarbonEmission(int year, Integer month, List<String> buildings) {
         if (year == -1) {
             return new ArrayList<>();
         }
-        return carbonEmissionMapper.selectAllCarbonEmission(year, month);
+        return carbonEmissionMapper.selectAllCarbonEmission(year, month, buildings);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
 
     @Override
     public Result<Map<String, Object>> getMulberryData(int year, Integer month) {
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month);
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month, null);
 
         if(carbonEmissions == null || carbonEmissions.isEmpty()) {
             return ResultUtils.error(ErrorCode.NULL_ERROR, "请求数据为空");
@@ -187,7 +187,7 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
 
     @Override
     public Result<Map<String, Object>> getSpeciesConsumptionData(Integer year, Integer month) {
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month);
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month, null);
 
         if (carbonEmissions == null || carbonEmissions.isEmpty()) {
             return ResultUtils.error(ErrorCode.NULL_ERROR, "请求数据为空");
@@ -211,7 +211,7 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
 
     @Override
     public Result<Map<String, Object>> getSpeciesCarbonData(Integer year, Integer month) {
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month);
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month, null);
 
         if (carbonEmissions == null || carbonEmissions.isEmpty()) {
             return ResultUtils.error(ErrorCode.NULL_ERROR, "请求数据为空");
@@ -244,8 +244,8 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
     }
 
     @Override
-    public Result<List<CarbonBuildingVo>> getBuildingCarbonLineData(Integer year, boolean area) {
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, null);
+    public Result<List<CarbonBuildingVo>> getBuildingCarbonLineData(Integer year, boolean area, List<String> buildings) {
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, null, buildings);
 
         if (carbonEmissions == null || carbonEmissions.isEmpty()) {
             return ResultUtils.error(ErrorCode.NULL_ERROR, "请求数据为空");
@@ -297,8 +297,8 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
     }
 
     @Override
-    public Result<List<CarbonBuildingBarVo>> getBuildingCarbonBarData(Integer year, Integer month, boolean area) {
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month);
+    public Result<List<CarbonBuildingBarVo>> getBuildingCarbonBarData(Integer year, Integer month, boolean area, List<String> buildings) {
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month, buildings);
 
         if (carbonEmissions == null || carbonEmissions.isEmpty()) {
             return ResultUtils.error(ErrorCode.NULL_ERROR, "请求数据为空");
@@ -345,9 +345,8 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
     }
 
     @Override
-    public Result<List<PlaceEmissionVo>> getBuildingInfoData(Integer year, Integer month) {
-        // 查询碳排放数据
-        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month);
+    public Result<List<PlaceEmissionVo>> getBuildingInfoData(Integer year, Integer month, List<String> buildings) {
+        List<CarbonEmission> carbonEmissions = carbonEmissionService.selectAllCarbonEmission(year, month, buildings);
 
         // 获取地点面积信息
         List<PlaceInfo> placeInfos = placeInfoService.list();

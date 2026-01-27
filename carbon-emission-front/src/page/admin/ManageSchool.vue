@@ -16,28 +16,28 @@
           </div>
           <el-form :model="schoolData" ref="schoolForm" label-width="160px" :rules="schoolRules" style="padding: 20px;">
             <el-form-item label="学校名称" prop="schoolName">
-              <el-input v-model="schoolData.schoolName" style="width: 750px" placeholder="请输入学校名称" class="text-center-input"></el-input>
+              <el-input v-model="schoolData.schoolName" style="width: 100%" placeholder="请输入学校名称" class="text-center-input"></el-input>
             </el-form-item>
             <el-form-item label="学校总人数" prop="totalNumber">
-              <el-input-number v-model="schoolData.totalNumber" :min="0" style="width: 750px" placeholder="请输入学校总人数"></el-input-number>
+              <el-input-number v-model="schoolData.totalNumber" :min="0" style="width: 100%" placeholder="请输入学校总人数"></el-input-number>
             </el-form-item>
             <el-form-item label="在校学生人数" prop="studentNumber">
-              <el-input-number v-model="schoolData.studentNumber" :min="0" style="width: 750px" placeholder="请输入在校学生人数"></el-input-number>
+              <el-input-number v-model="schoolData.studentNumber" :min="0" style="width: 100%" placeholder="请输入在校学生人数"></el-input-number>
             </el-form-item>
             <el-form-item label="在校教师人数" prop="teacherNumber">
-              <el-input-number v-model="schoolData.teacherNumber" :min="0" style="width: 750px" placeholder="请输入在校教师人数"></el-input-number>
+              <el-input-number v-model="schoolData.teacherNumber" :min="0" style="width: 100%" placeholder="请输入在校教师人数"></el-input-number>
             </el-form-item>
             <el-form-item label="学校总占地面积(m²)" prop="totalArea">
-              <el-input-number v-model="schoolData.totalArea" :min="0" style="width: 750px" placeholder="请输入学校总占地面积"></el-input-number>
+              <el-input-number v-model="schoolData.totalArea" :min="0" style="width: 100%" placeholder="请输入学校总占地面积"></el-input-number>
             </el-form-item>
             <el-form-item label="校园建筑物面积(m²)" prop="buildingArea">
-              <el-input-number v-model="schoolData.buildingArea" :min="0" style="width: 750px" placeholder="请输入校园建筑物面积"></el-input-number>
+              <el-input-number v-model="schoolData.buildingArea" :min="0" style="width: 100%" placeholder="请输入校园建筑物面积"></el-input-number>
             </el-form-item>
             <el-form-item label="校园绿化总面积(m²)" prop="greenArea">
-              <el-input-number v-model="schoolData.greenArea" :min="0" style="width: 750px" placeholder="请输入校园绿化总面积"></el-input-number>
+              <el-input-number v-model="schoolData.greenArea" :min="0" style="width: 100%" placeholder="请输入校园绿化总面积"></el-input-number>
             </el-form-item>
             <el-form-item label="学校图片地址" prop="imageUrl">
-              <el-input v-model="schoolData.imageUrl" style="width: 750px" placeholder="请输入学校图片地址（URL）" class="text-center-input"></el-input>
+              <el-input v-model="schoolData.imageUrl" style="width: 100%" placeholder="请输入学校图片地址（URL）" class="text-center-input"></el-input>
               <div style="margin-top: 10px;margin-left: 20px; color: #909399; font-size: 12px;">
                 提示：可以输入图片的URL地址，例如：https://example.com/image.jpg 或 /static/images/school.jpg
               </div>
@@ -177,9 +177,39 @@ export default {
   overflow-y: visible;
 }
 
+/* 表单容器样式优化 */
+.el-card {
+  max-width: 1200px;
+}
+
+.el-form {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* 表单项容器样式 - 确保输入框有合理的最大宽度 */
+::v-deep .el-form-item__content {
+  max-width: 750px;
+  width: 100%;
+}
+
+/* 输入框样式优化 */
+::v-deep .el-input,
+::v-deep .el-input-number {
+  width: 100% !important;
+  max-width: 750px;
+}
+
+/* 输入框内容居中显示 - 仅在此页面生效 */
+/* Vue 2 使用 /deep/ 语法进行深度选择 */
+/deep/ .el-input__inner {
+  text-align: center !important;
+}
+
 /* 表单项样式优化 */
 ::v-deep .el-form-item__label {
   margin-right: 20px !important; /* 增加标签右边距 */
+  width: 160px;
 }
 
 /* 按钮表单项对齐 */
@@ -187,10 +217,52 @@ export default {
   margin-left: 160px !important; /* 与输入框左边界对齐（标签宽度160px） */
 }
 
-/* 输入框内容居中显示 - 仅在此页面生效 */
-/* Vue 2 使用 /deep/ 语法进行深度选择 */
-/deep/ .el-input__inner {
-  text-align: center !important;
+/* 响应式设计 - 在小屏幕上优化布局 */
+@media (max-width: 768px) {
+  .el-card {
+    margin: 0 10px;
+  }
+  
+  .el-form {
+    padding: 10px !important;
+  }
+  
+  ::v-deep .el-form-item__label {
+    margin-right: 10px !important;
+    width: 120px;
+    font-size: 14px;
+  }
+  
+  ::v-deep .el-form-item__content {
+    max-width: none;
+  }
+  
+  .form-actions ::v-deep .el-form-item__content {
+    margin-left: 120px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  ::v-deep .el-form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  ::v-deep .el-form-item__label {
+    margin-bottom: 8px;
+    margin-right: 0 !important;
+    width: 100%;
+  }
+  
+  ::v-deep .el-form-item__content {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+  
+  .form-actions ::v-deep .el-form-item__content {
+    margin-left: 0 !important;
+  }
 }
 </style>
 

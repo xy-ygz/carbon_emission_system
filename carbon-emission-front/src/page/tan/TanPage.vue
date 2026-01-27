@@ -10,7 +10,7 @@
           <div class="forest-card-body">
             <div class="leftl">
               <el-descriptions class="xiaoyuangai" title=""
-                :column="1" size="medium" border 
+                :column="descriptionColumn" size="medium" border 
                 :contentStyle="{color: '#1a3d0d', fontSize: 'var(--forest-main-font-size)'}" 
                 :labelStyle="{color: '#4a7c3a', fontWeight: 600, fontSize: 'var(--forest-main-font-size)'}">
                 <el-descriptions-item>
@@ -171,6 +171,7 @@ export default {
       xxValue: [],
       yyValue: [],
       charts1: "charts1",
+      resizeTimer: null, // resize 防抖定时器
     };
   },
   computed: {
@@ -181,6 +182,22 @@ export default {
       } else {
         return 'url(../../pic/co25.jpg)';
       }
+    },
+    // 响应式：根据屏幕宽度动态设置 el-descriptions 的列数
+    descriptionColumn() {
+      if (typeof window !== 'undefined') {
+        const width = window.innerWidth;
+        if (width <= 480) {
+          return 1; // 小屏幕：1列
+        } else if (width <= 768) {
+          return 1; // 移动端：1列
+        } else if (width <= 1024) {
+          return 1; // 平板：1列
+        } else {
+          return 1; // 桌面：1列（保持原设计）
+        }
+      }
+      return 1;
     }
   },
   mounted: function () {
@@ -191,6 +208,9 @@ export default {
     this.getPie()
     this.getCarbonBar()
     this.getCarbonData()
+    
+    // 添加窗口 resize 监听（响应式布局）
+    window.addEventListener('resize', this.handleResize);
     
     // 页面加载完成后额外触发一次 resize，确保 flex 布局计算完成后图表能铺满
     this.$nextTick(() => {
@@ -204,6 +224,10 @@ export default {
   beforeDestroy() {
     // 组件销毁前清理图表实例和监听器
     window.removeEventListener('resize', this.handleResize);
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
     if (this.myChart4) {
       this.myChart4.dispose();
       this.myChart4 = null;
@@ -224,15 +248,23 @@ export default {
       // 返回格式化后的字符串
       return parts.join('.');
     },
-    // 抽离统一的 resize 方法
+    // 抽离统一的 resize 方法（带防抖优化）
     handleResize() {
-      if (this.myChart4) {
-        this.myChart4.resize();
+      // 清除之前的定时器
+      if (this.resizeTimer) {
+        clearTimeout(this.resizeTimer);
       }
-      // 如果子组件有 resize 方法也一并调用
-      if (this.$refs.assessmentGraph && this.$refs.assessmentGraph.resize) {
-        this.$refs.assessmentGraph.resize();
-      }
+      
+      // 防抖：延迟执行，避免频繁触发
+      this.resizeTimer = setTimeout(() => {
+        if (this.myChart4) {
+          this.myChart4.resize();
+        }
+        // 如果子组件有 resize 方法也一并调用
+        if (this.$refs.assessmentGraph && this.$refs.assessmentGraph.resize) {
+          this.$refs.assessmentGraph.resize();
+        }
+      }, 150); // 150ms 防抖延迟
     },
     getPie() {
       request.get("/api/carbonEmission/listSpeciesCarbon").then((res) => {
@@ -316,13 +348,25 @@ export default {
             }
             
             // 核心修复：确保 DOM 已经有宽高，否则延迟初始化
-            if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
-              setTimeout(() => {
+            // 增加重试机制，确保在小屏幕时也能正确初始化
+            let retryCount = 0;
+            const maxRetries = 5;
+            
+            const tryInit = () => {
+              if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+                if (retryCount < maxRetries) {
+                  retryCount++;
+                  setTimeout(tryInit, 200);
+                } else {
+                  // 即使没有宽高也尝试初始化，让echarts自己处理
+                  this.initSpeciesBarChart(chartDom);
+                }
+              } else {
                 this.initSpeciesBarChart(chartDom);
-              }, 100);
-            } else {
-              this.initSpeciesBarChart(chartDom);
-            }
+              }
+            };
+            
+            tryInit();
           });
         }
       }).catch(() => {
@@ -339,44 +383,82 @@ export default {
         this.myChart4.dispose();
       }
       
+      // 响应式配置：根据容器宽度动态调整图表布局
+      const containerWidth = chartDom.clientWidth || chartDom.offsetWidth || 600;
+      let gridConfig, xAxisLabelConfig, legendConfig;
+      
+      if (containerWidth < 600) {
+        // 小屏幕：调整grid和xAxis标签
+        gridConfig = {
+          top: '15%',
+          left: '8%',
+          right: '5%',
+          bottom: '15%', // 增加底部空间，避免x轴标签被截断
+          containLabel: true
+        };
+        xAxisLabelConfig = {
+          interval: 0,
+          rotate: 45, // 旋转标签避免重叠
+          fontSize: 10
+        };
+        legendConfig = {
+          orient: 'horizontal',
+          x: 'center',
+          y: 'bottom',
+          data: ['CO₂排放量']
+        };
+      } else {
+        // 大屏幕：使用默认配置
+        gridConfig = {
+          top: '20%',
+          left: '3%',
+          right: '3%',
+          bottom: '3%',
+          containLabel: true
+        };
+        xAxisLabelConfig = {
+          interval: 0
+        };
+        legendConfig = {
+          orient: 'vertical',
+          x: 'right',
+          y: 'top',
+          data: ['CO₂排放量']
+        };
+      }
+      
       // 初始化echarts实例
       this.myChart4 = this.$echarts.init(chartDom);
       this.myChart4.setOption({
         title: {
           text: 'CO₂排放量(kg)',
           left: 'left',
-          top: '0%'
+          top: '0%',
+          textStyle: {
+            fontSize: containerWidth < 600 ? 14 : 16
+          }
         },
-        grid: {
-          top: '20%',
-          left: '3%',
-          right: '3%',
-          bottom: '3%',
-          containLabel: true
-        },
+        grid: gridConfig,
         tooltip: {
           trigger: 'item',
           formatter: (params) => {
             return '碳排放量' + '<br/>' + params.marker + params.name + ':' + parseFloat(params.value).toFixed(2) + '(kg)' + '<br/>';
           },
         },
-        legend: {
-          orient: 'vertical',
-          x: 'right',
-          y: 'top',
-          data: ['CO₂排放量']
-        },
+        legend: legendConfig,
         xAxis: {
           data: this.xxValue,
-          axisLabel: {
-            interval: 0
-          },
+          axisLabel: xAxisLabelConfig,
         },
-        yAxis: {},
+        yAxis: {
+          axisLabel: {
+            fontSize: containerWidth < 600 ? 10 : 12
+          }
+        },
         series: [{
           name: 'CO₂排放量',
           type: 'bar',
-          barMaxWidth: '40%',
+          barMaxWidth: containerWidth < 600 ? '50%' : '40%',
           data: this.yyValue,
           itemStyle: {
             color: function () {
@@ -523,13 +605,13 @@ export default {
   background-color: var(--forest-bg-primary);
   width: 100%;
   margin: 0;
-  height: 100%; /* 占据父级 .child 的 100% 高度 */
-  min-height: 0;
+  min-height: 100%; /* 改为 min-height，允许内容超出时滚动 */
   text-align: center;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* 确保内部不溢出产生滚动条 */
+  overflow-x: hidden; /* 只隐藏横向滚动条 */
+  overflow-y: auto; /* 允许垂直滚动 */
   /* 抽取全局字体属性，确保全页比例协调 */
   --forest-main-font-size: 1.03rem;
 }
@@ -543,7 +625,8 @@ export default {
   width: 80%;
   margin: 0 auto;
   gap: 15px;
-  height: 50%; /* 占据父容器 60% 高度 */
+  min-height: 400px; /* 改为最小高度，允许内容超出时自动扩展 */
+  flex: 0 0 auto; /* 不自动收缩，根据内容决定高度 */
 }
 
 /* 底部一行：左侧表格卡片 + 右侧柱状图 */
@@ -555,7 +638,168 @@ export default {
   margin: 0 auto;
   margin-top: 20px;
   gap: 15px;
-  height: 40%; /* 占据父容器 40% 高度 */
+  min-height: 300px; /* 改为最小高度，允许内容超出时自动扩展 */
+  flex: 0 0 auto; /* 不自动收缩，根据内容决定高度 */
+}
+
+/* ==================== 响应式布局 ==================== */
+
+/* 平板设备 (768px - 1024px) */
+@media (max-width: 1024px) {
+  .indextop {
+    width: 95%;
+    gap: 10px;
+    min-height: 350px; /* 平板端最小高度 */
+  }
+  
+  .indexbottom {
+    width: 95%;
+    gap: 10px;
+    min-height: 250px; /* 平板端最小高度 */
+  }
+  
+  .carbonon {
+    min-width: 0; /* 允许收缩 */
+  }
+  
+  .carbonup {
+    min-width: 0; /* 允许收缩 */
+  }
+  
+  .forest-card-header {
+    font-size: 18px;
+    padding: 8px 15px;
+  }
+}
+
+/* 移动设备 (< 768px) */
+@media (max-width: 768px) {
+  .indextop {
+    flex-direction: column; /* 改为纵向堆叠 */
+    width: 100%;
+    height: auto; /* 自动高度 */
+    min-height: auto; /* 移除最小高度限制 */
+    gap: 15px;
+    padding: 10px;
+    margin: 0;
+  }
+  
+  .indexbottom {
+    flex-direction: column; /* 改为纵向堆叠 */
+    width: 100%;
+    height: auto; /* 自动高度 */
+    min-height: auto; /* 移除最小高度限制 */
+    gap: 15px;
+    padding: 0 10px;
+    margin-top: 15px;
+  }
+  
+  .left {
+    flex: 1 1 100%; /* 移动端占满宽度 */
+    min-width: 0;
+  }
+  
+  .carbonright {
+    flex: 1 1 100%; /* 移动端占满宽度 */
+    min-width: 0;
+    min-height: 300px; /* 确保图表有足够高度 */
+  }
+  
+  .carbonon {
+    flex: 1 1 100%; /* 移动端占满宽度 */
+    min-width: 0;
+  }
+  
+  .carbonup {
+    flex: 1 1 100%; /* 移动端占满宽度 */
+    min-width: 0;
+    min-height: 400px; /* 移动端确保图表有足够高度 */
+  }
+  
+  .carbonup-chart-wrap {
+    min-height: 350px; /* 移动端图表容器最小高度 */
+  }
+  
+  #homeSpeciesBarChart {
+    min-height: 350px; /* 移动端图表最小高度 */
+  }
+  
+  /* 学校概况卡片内部布局调整 */
+  .forest-card-body {
+    flex-direction: column; /* 移动端纵向排列 */
+  }
+  
+  .leftl {
+    flex: 0 0 auto; /* 移动端不固定比例 */
+    min-height: auto;
+  }
+  
+  .xiaoyuantu {
+    flex: 0 0 auto; /* 移动端不固定比例 */
+    min-height: 200px;
+  }
+  
+  .forest-card-header {
+    font-size: 16px;
+    padding: 8px 12px;
+  }
+  
+  /* Element UI 描述列表响应式 */
+  .index-main-box-carbon .xiaoyuangai {
+    padding: 10px;
+  }
+  
+  /* 表格响应式：小屏幕横向滚动 */
+  .index-main-box-carbon .forest-card-body-table {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+  
+  .index-main-box-carbon .forest-card-body-table .table_two {
+    min-width: 500px; /* 确保表格最小宽度，触发横向滚动 */
+  }
+}
+
+/* 小屏幕移动设备 (< 480px) */
+@media (max-width: 480px) {
+  .indextop {
+    padding: 5px;
+    gap: 10px;
+  }
+  
+  .indexbottom {
+    padding: 0 5px;
+    gap: 10px;
+  }
+  
+  .forest-card-header {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  .index-main-box-carbon {
+    --forest-main-font-size: 0.9rem; /* 小屏幕字体稍小 */
+  }
+  
+  .xiaoyuantu {
+    min-height: 150px;
+  }
+  
+  .carbonright {
+    min-height: 250px;
+  }
+  
+  .carbonup {
+    min-height: 400px; /* 小屏幕确保有足够高度 */
+  }
+  
+  .carbonup-chart-wrap {
+    min-height: 350px; /* 小屏幕图表容器最小高度 */
+  }
+  
+  #homeSpeciesBarChart {
+    min-height: 350px; /* 小屏幕图表最小高度 */
+  }
 }
 
 .forest-card {
@@ -643,7 +887,7 @@ export default {
 /* ---------- 底部区域：左侧表格卡片与右侧柱状图并排 ---------- */
 .carbonon {
   flex: 0 1 27%; /* 占据 30% 宽度 */
-  min-width: 300px;
+  min-width: 0; /* 允许收缩，响应式时移除固定最小宽度 */
   display: flex;
   flex-direction: column;
 }
@@ -692,20 +936,23 @@ export default {
 
 .carbonup {
   flex: 1; /* 占据剩余宽度 */
-  min-width: 600px;
+  min-width: 0; /* 允许收缩，响应式时移除固定最小宽度 */
   display: flex;
   flex-direction: column;
 }
 
 .carbonup-chart-wrap {
   flex: 1;
-  min-height: 0;
+  min-height: 300px; /* 确保有最小高度，避免图表不显示 */
   padding: 15px 0px 5px 5px; /* 减少底部内边距 */
   box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
 }
 
 #homeSpeciesBarChart {
   width: 100%;
   height: 100%;
+  min-height: 300px; /* 确保图表有最小高度 */
 }
 </style>
