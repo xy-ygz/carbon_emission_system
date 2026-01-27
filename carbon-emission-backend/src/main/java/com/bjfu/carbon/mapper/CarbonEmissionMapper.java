@@ -42,8 +42,14 @@ public interface CarbonEmissionMapper extends BaseMapper<CarbonEmission> {
             "<if test='month != null'>",
             "AND month = #{month} ",
             "</if>",
+            "<if test='buildings != null and buildings.size() > 0'>",
+            "AND place IN ",
+            "<foreach collection='buildings' item='building' open='(' separator=',' close=')'>",
+            "#{building}",
+            "</foreach>",
+            "</if>",
             "</script>"})
-    List<CarbonEmission> selectAllCarbonEmission(@Param("year") int year, @Param("month") Integer month);
+    List<CarbonEmission> selectAllCarbonEmission(@Param("year") int year, @Param("month") Integer month, @Param("buildings") List<String> buildings);
 
     @Select("SELECT id, name, category, consumption, purpose, year, month, amount, place, emission_type, created_time, modified_time " +
             "FROM carbon_emission " +

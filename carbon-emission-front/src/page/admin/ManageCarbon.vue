@@ -16,7 +16,7 @@
               <el-date-picker v-model="year" type="year" value-format='yyyy' placeholder="选择年" size="small">
               </el-date-picker>
               <!-- <el-input v-model="month" placeholder="选择月" size="small" style="width:200px"></el-input> -->
-              <el-select v-model="month" placeholder="选择月">
+              <el-select v-model="month" placeholder="选择月" size="small">
                 <el-option v-for="item in 12" :key="item" :label="item" :value="item">
                 </el-option>
               </el-select>
@@ -504,8 +504,27 @@ export default {
 
 </script>
 <style scoped>
+/* 统一所有输入组件的高度 */
 .el-input__inner {
   height: 32.5px;
+}
+
+/* 确保日期选择器高度一致 */
+::v-deep .energyleft .el-date-picker .el-input__inner {
+  height: 32.5px;
+}
+
+/* 确保下拉框高度一致 */
+::v-deep .energyleft .el-select .el-input__inner {
+  height: 32.5px;
+}
+
+/* 确保所有按钮高度与输入框一致 */
+::v-deep .energyleft .el-button--small,
+::v-deep .energyright .el-button--small {
+  height: 32.5px;
+  padding: 9px 15px;
+  line-height: 1;
 }
 
 .cell {
@@ -518,8 +537,7 @@ export default {
 }
 
 .energyright {
-  vertical-align: top !important;
-  margin-bottom: 19px;
+  vertical-align: middle !important;
 }
 
 .el-table__body tr:hover>td {
@@ -549,5 +567,90 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap; /* 允许换行 */
+  gap: 15px; /* 添加间距 */
+}
+
+.energyleft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0; /* 允许收缩 */
+}
+
+.energyleft .el-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.energyleft .el-form-item {
+  margin-bottom: 0;
+  margin-right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.energyleft .el-form-item .el-input,
+.energyleft .el-form-item .el-date-picker,
+.energyleft .el-form-item .el-select {
+  flex-shrink: 0;
+}
+
+.energyright {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.energyright .el-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .flex-box-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .energyleft {
+    width: 100%;
+  }
+  
+  .energyright {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .flex-box-header {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  
+  .energyleft .el-form-item {
+    width: 100%;
+  }
+  
+  .energyleft .el-form-item .el-input,
+  .energyleft .el-form-item .el-date-picker,
+  .energyleft .el-form-item .el-select {
+    width: 100%;
+    max-width: 200px;
+  }
 }
 </style>

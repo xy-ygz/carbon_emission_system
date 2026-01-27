@@ -5,6 +5,10 @@ import com.bjfu.carbon.common.Result;
 import com.bjfu.carbon.domain.CarbonEmission;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.bjfu.carbon.domain.EmissionAndConsume;
+import com.bjfu.carbon.vo.CarbonBuildingBarVo;
+import com.bjfu.carbon.vo.CarbonBuildingVo;
+import com.bjfu.carbon.vo.EmissionCategoryTimePeriodVo;
+import com.bjfu.carbon.vo.PlaceEmissionVo;
 
 import java.util.List;
 import java.util.Map;
@@ -20,8 +24,11 @@ public interface CarbonEmissionService extends IService<CarbonEmission> {
 
     /**
      * 通过年、月（可为空）筛查所有碳排放记录
+     * @param year 年份
+     * @param month 月份（可为空）
+     * @param buildings 楼宇名称列表（可为空，为空时返回所有楼宇）
      */
-    List<CarbonEmission> selectAllCarbonEmission(int year, Integer month);
+    List<CarbonEmission> selectAllCarbonEmission(int year, Integer month, List<String> buildings);
 
     /**
      * 筛查年月之间的碳排放记录
@@ -44,7 +51,7 @@ public interface CarbonEmissionService extends IService<CarbonEmission> {
     /**
      * 获取柱状堆叠图数据：指定起始年份-起始月份~终止年份-终止月份对应的每个月份不同物品分类对应的排放量
      */
-    Result<java.util.List<com.bjfu.carbon.vo.EmissionCategoryTimePeriodVo>> getEmissionCategoryData(Integer startYear, Integer startMonth, Integer endYear, Integer endMonth);
+    Result<List<EmissionCategoryTimePeriodVo>> getEmissionCategoryData(Integer startYear, Integer startMonth, Integer endYear, Integer endMonth);
 
 
     Result<Map<String, Object>> getSpeciesConsumptionData(Integer year, Integer month);
@@ -56,26 +63,29 @@ public interface CarbonEmissionService extends IService<CarbonEmission> {
      * 获取楼宇碳排放折线图数据：每年的不同楼宇对应的碳排放
      * @param year 年份
      * @param area 是否计算地均排放（true：地均排放，false：总排放）
+     * @param buildings 楼宇名称列表（可为空，为空时返回所有楼宇）
      * @return 楼宇碳排放数据列表
      */
-    Result<java.util.List<com.bjfu.carbon.vo.CarbonBuildingVo>> getBuildingCarbonLineData(Integer year, boolean area);
+    Result<List<CarbonBuildingVo>> getBuildingCarbonLineData(Integer year, boolean area, List<String> buildings);
 
     /**
      * 获取楼宇碳排放柱状图数据：指定年份月份的不同楼宇对应的碳排放
      * @param year 年份（可为空，为空时使用实际年份）
      * @param month 月份（可为空，为空时使用当前月份）
      * @param area 是否计算地均排放（true：地均排放，false：总排放）
+     * @param buildings 楼宇名称列表（可为空，为空时返回所有楼宇）
      * @return 楼宇碳排放数据列表
      */
-    Result<java.util.List<com.bjfu.carbon.vo.CarbonBuildingBarVo>> getBuildingCarbonBarData(Integer year, Integer month, boolean area);
+    Result<List<CarbonBuildingBarVo>> getBuildingCarbonBarData(Integer year, Integer month, boolean area, List<String> buildings);
 
     /**
      * 获取楼宇信息数据：不同楼宇的电耗、碳排放量、单位面积排放量
      * @param year 年份（可为空，为空时使用实际年份）
      * @param month 月份（可为空，为空时使用当前月份）
+     * @param buildings 楼宇名称列表（可为空，为空时返回所有楼宇）
      * @return 楼宇信息数据列表
      */
-    Result<java.util.List<com.bjfu.carbon.vo.PlaceEmissionVo>> getBuildingInfoData(Integer year, Integer month);
+    Result<List<PlaceEmissionVo>> getBuildingInfoData(Integer year, Integer month, List<String> buildings);
 
     /**
      * 通过该接口得到各种碳排放值和物品消耗值

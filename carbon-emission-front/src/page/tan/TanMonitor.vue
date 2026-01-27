@@ -14,7 +14,7 @@
               </el-date-picker>
             </el-form-item>
             <el-form-item label="选择地点：">
-              <el-select v-model="value1" multiple @remove-tag="removeTag" placeholder="请选择地点" size="small" class="filter-input" style="width: 200px;">
+              <el-select v-model="value1" multiple @remove-tag="removeTag" placeholder="请选择地点" size="small" class="filter-input">
                 <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item"
                   @click.native="getBuildings(item)">
                 </el-option>
@@ -26,13 +26,10 @@
                 <el-option label="建筑单位面积碳排量" value="1"></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item>
+            <!-- 按钮组 - 合并到一个表单项中 -->
+            <el-form-item class="button-group">
               <el-button size="small" @click="searchBuilding()" type="primary" icon="el-icon-search" class="forest-btn">查询</el-button>
-            </el-form-item>
-            <el-form-item>
               <el-button size="small" @click="resetFilters()" icon="el-icon-refresh" class="reset-btn">重置</el-button>
-            </el-form-item>
-            <el-form-item>
               <el-button size="small" @click="exportChart()" icon="el-icon-download">导出图表</el-button>
             </el-form-item>
           </el-form>
@@ -147,7 +144,7 @@ export default {
       buildingClass: [],
       mylabel: '',
       buill: '',
-      area: '',
+      area: '0', // 默认值为"建筑碳排放量"
       buildingbui: '',
       // KPI 数据
       totalEmission: 0,
@@ -215,7 +212,7 @@ export default {
       this.year = '';
       this.value1 = [];
       this.buidingSet.clear();
-      this.area = '';
+      this.area = '0'; // 重置为默认值"建筑碳排放量"
       this.showValue = false;
       this.getBuilding();
       this.getCarbonBar();
@@ -452,7 +449,7 @@ export default {
       });
     },
     getBuilding() {
-      getCarbonLine({ building: this.building }).then(res => {
+      getCarbonLine({ buildings: this.building }).then(res => {
         if (res.data.code == 200) {
           this.carbonInformation = res.data.data
           var buildingsNameme = new Set();
@@ -542,7 +539,10 @@ export default {
             this.schoolInformation.year = this.year; // 用户选择的年份
             this.showValue = true;
           } else if (this.carbonInformation && this.carbonInformation.length > 0) {
-            this.schoolInformation.year = this.carbonInformation[0].year; // 后端返回的实际年份
+            // 回显后端返回的年份
+            const backendYear = this.carbonInformation[0].year;
+            this.schoolInformation.year = backendYear;
+            this.year = backendYear ? backendYear.toString() : '';
             this.showValue = true;
           } else {
             this.showValue = false;
@@ -563,7 +563,7 @@ export default {
     },
     getCarbonBar() {
       // 初始调用时不传year参数（让后端回退查找）
-      getCarbonLine({ building: this.building }).then(res => {
+      getCarbonLine({ buildings: this.building }).then(res => {
         if (this.year == '')
           this.showValue = false;
         else
@@ -576,7 +576,10 @@ export default {
             this.schoolInformation.year = this.year; // 用户选择的年份
             this.showValue = true;
           } else if (this.carbonInformation && this.carbonInformation.length > 0) {
-            this.schoolInformation.year = this.carbonInformation[0].year; // 后端返回的实际年份
+            // 回显后端返回的年份
+            const backendYear = this.carbonInformation[0].year;
+            this.schoolInformation.year = backendYear;
+            this.year = backendYear ? backendYear.toString() : '';
             this.showValue = true;
           } else {
             this.showValue = false;
@@ -705,24 +708,37 @@ export default {
 
 /* 筛选条件区域 */
 .filter-section {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .filter-content {
-  padding: 20px;
+  padding: 15px;
 }
 
 .filter-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 15px;
   align-items: center;
+  justify-content: flex-start;
+  margin: 0;
 }
 
+/* 表单项容器样式 - 减小上下间距 */
+::v-deep .el-form-item {
+  margin-bottom: 0 !important;
+  margin-right: 0 !important;
+  padding: 0;
+  height: auto;
+}
+
+/* 输入框样式 */
 .filter-input {
-  width: 120px;
+  width: 140px;
+  min-width: 120px;
 }
 
+/* 重置按钮样式 */
 .reset-btn {
   background-color: var(--forest-text-disabled);
   border-color: var(--forest-text-disabled);
@@ -732,6 +748,33 @@ export default {
 .reset-btn:hover {
   background-color: var(--forest-text-secondary);
   border-color: var(--forest-text-secondary);
+}
+
+/* 按钮组样式 - 确保按钮在一行内排列 */
+.button-group {
+  display: flex;
+  gap: 15px; /* 保持原有的间距 */
+  align-items: center;
+  margin-left: 0; /* 向左对齐 */
+  padding: 0;
+  white-space: nowrap; /* 防止换行 */
+}
+
+/* 按钮组内部的表单项样式 */
+.button-group ::v-deep .el-form-item__content {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 15px; /* 保持原有的间距 */
+  white-space: nowrap; /* 防止换行 */
+}
+
+/* 单个按钮样式 - 保持原有的间距 */
+.button-group .el-button {
+  margin: 0 !important;
+  height: 32px;
+  padding: 0 15px; /* 保持原有的内边距 */
+  font-size: 14px;
 }
 
 /* 图表区域 */
@@ -809,12 +852,39 @@ export default {
   }
 
   .filter-form {
-    flex-direction: column;
-    align-items: stretch;
+    gap: 10px;
   }
 
   .filter-input {
-    width: 100%;
+    width: 130px;
+  }
+  
+  /* 按钮组始终在一行，向左对齐 */
+  .button-group {
+    margin-left: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 992px) {
+  .filter-form {
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  
+  ::v-deep .el-form-item {
+    margin-right: 0;
+  }
+  
+  .filter-input {
+    width: 120px;
+  }
+  
+  /* 按钮组在中等屏幕上向左对齐 */
+  .button-group {
+    margin-left: 0;
+    flex: none;
+    white-space: nowrap;
   }
 }
 
@@ -827,8 +897,50 @@ export default {
     padding: 10px;
   }
 
+  .filter-section {
+    margin-bottom: 15px;
+  }
+  
+  .filter-content {
+    padding: 15px;
+  }
+
   .filter-form {
+    flex-wrap: wrap;
     gap: 10px;
+    align-items: center;
+  }
+  
+  /* 表单项在小屏幕上更紧凑 - 三列布局 */
+  ::v-deep .el-form-item {
+    flex: 1 1 calc(33.333% - 7px);
+    min-width: calc(33.333% - 7px);
+    margin-right: 0;
+  }
+  
+  /* 按钮组在小屏幕上保持一行，向左对齐 */
+  .button-group {
+    flex: 1 1 100%;
+    min-width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-top: 5px;
+    white-space: nowrap;
+  }
+  
+  /* 按钮在小屏幕上保持原有间距 */
+  .button-group .el-button {
+    margin: 0 15px 0 0 !important;
+  }
+  
+  /* 输入框在小屏幕上占满宽度 */
+  ::v-deep .el-form-item__content {
+    width: 100%;
+  }
+  
+  .filter-input {
+    width: 100%;
+    min-width: auto;
   }
 
   .chart-container {
@@ -855,6 +967,47 @@ export default {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
     padding: 12px 0 !important;
     text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* 在超小屏幕上，所有表单项垂直排列 */
+  .filter-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  ::v-deep .el-form-item {
+    flex: 1 1 100%;
+    min-width: 100%;
+    margin-right: 0;
+  }
+  
+  /* 标签在超小屏幕上固定宽度 */
+  ::v-deep .el-form-item__label {
+    width: 80px;
+    font-size: 13px;
+  }
+  
+  .filter-input {
+    flex: 1;
+    width: auto;
+  }
+  
+  /* 按钮组在超小屏幕上保持一行，向左对齐 */
+  .button-group {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-left: 0;
+    flex: 1 1 100%;
+    white-space: nowrap;
+  }
+  
+  /* 按钮在超小屏幕上保持原有间距 */
+  .button-group .el-button {
+    margin: 0 15px 0 0 !important;
+    flex: none;
   }
 }
 

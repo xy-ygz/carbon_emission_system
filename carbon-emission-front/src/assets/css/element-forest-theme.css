@@ -47,10 +47,10 @@
   table-layout: fixed;
 }
 
-.el-table .el-table__header-wrapper,
+/* .el-table .el-table__header-wrapper, */
 .el-table .el-table__body-wrapper {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto; /* 允许横向滚动，滚动条出现在表格内部 */
 }
 
 .el-table .el-table__header,

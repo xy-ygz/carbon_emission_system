@@ -35,7 +35,8 @@ body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: hidden; /* 防止最外层出现滚动条 */
+  overflow-x: hidden; /* 只隐藏横向滚动条 */
+  overflow-y: auto; /* 允许垂直滚动 */
 }
 
 #app {
@@ -46,8 +47,9 @@ body {
   color: #1a3d0d;
   background-color: #f0f7ed;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%; /* 改为 min-height，允许内容超出时滚动 */
+  overflow-x: hidden; /* 只隐藏横向滚动条 */
+  overflow-y: auto; /* 允许垂直滚动 */
   box-sizing: border-box;
   position: relative;
 }
@@ -55,7 +57,8 @@ body {
 .fillcontain {
   position: relative;
   width: 100%;
-  height: 100%;
-  overflow-x: hidden;
+  min-height: 100%; /* 改为 min-height，允许内容超出时滚动 */
+  overflow-x: hidden; /* 只隐藏横向滚动条 */
+  overflow-y: auto; /* 允许垂直滚动 */
 }
 </style>
