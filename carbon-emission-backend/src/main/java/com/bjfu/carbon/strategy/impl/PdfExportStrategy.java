@@ -12,15 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * PDF导出策略实现
- * 复用Word导出逻辑，将生成的Word文档转换为PDF格式
- * 
+ * PDF导出策略实现（方案A：内存流不落盘）
+ * 复用Word导出逻辑：模板+占位符生成XWPFDocument后，写入内存字节流，
+ * 由docx4j从InputStream加载并直接toFO输出PDF，避免临时Word文件的磁盘IO。
+ *
  * @author xgy
  */
 @Slf4j
@@ -46,11 +48,10 @@ public class PdfExportStrategy implements ExportStrategy {
         }
         
         File tempImageDir = createTempImageDir();
-        File tempWordFile = null;
         XWPFDocument wordDocument = null;
         
         try {
-            // 1. 生成Word文档（复用Word导出逻辑）
+            // 1. 生成Word文档（复用Word导出逻辑：模板+占位符）
             long wordStartTime = System.currentTimeMillis();
             wordDocument = wordExportStrategy.createWordDocument(year);
             long wordEndTime = System.currentTimeMillis();
@@ -61,30 +62,34 @@ public class PdfExportStrategy implements ExportStrategy {
                 return;
             }
             
-            // 2. 保存Word文档到临时文件
-            long saveStartTime = System.currentTimeMillis();
-            tempWordFile = saveWordDocumentToFile(wordDocument);
+            // 2. 写入内存流（不落盘，避免临时文件IO）
+            long streamStartTime = System.currentTimeMillis();
+            byte[] docxBytes;
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                wordDocument.write(baos);
+                baos.flush();
+                docxBytes = baos.toByteArray();
+            }
             wordDocument.close();
             wordDocument = null;
-            long saveEndTime = System.currentTimeMillis();
-            log.info("Word文档保存到文件耗时: {}ms", saveEndTime - saveStartTime);
+            long streamEndTime = System.currentTimeMillis();
+            log.info("Word文档写入内存流耗时: {}ms", streamEndTime - streamStartTime);
             
-            // 3. 转换为PDF
+            // 3. 从内存流加载并转换为PDF
             long pdfStartTime = System.currentTimeMillis();
-            convertWordFileToPdf(tempWordFile, tempImageDir.getAbsolutePath(), tempImageDir, year, response);
+            convertDocxBytesToPdf(docxBytes, tempImageDir.getAbsolutePath(), year, response);
             long pdfEndTime = System.currentTimeMillis();
             log.info("Word转PDF转换耗时: {}ms", pdfEndTime - pdfStartTime);
             
             long totalTime = System.currentTimeMillis() - startTime;
-            log.info("PDF导出总耗时: {}ms (Word生成: {}ms, 文件保存: {}ms, PDF转换: {}ms)", 
-                totalTime, wordEndTime - wordStartTime, saveEndTime - saveStartTime, pdfEndTime - pdfStartTime);
+            log.info("PDF导出总耗时: {}ms (Word生成: {}ms, 内存流: {}ms, PDF转换: {}ms)",
+                totalTime, wordEndTime - wordStartTime, streamEndTime - streamStartTime, pdfEndTime - pdfStartTime);
             
         } catch (IOException e) {
             log.error("PDF导出失败", e);
             sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "PDF导出失败：" + e.getMessage());
         } finally {
             closeResource(wordDocument);
-            deleteFile(tempWordFile);
             deleteDirectory(tempImageDir);
         }
     }
@@ -128,25 +133,6 @@ public class PdfExportStrategy implements ExportStrategy {
     }
     
     /**
-     * 保存Word文档到临时文件
-     */
-    private File saveWordDocumentToFile(XWPFDocument wordDocument) throws IOException {
-        File tempWordFile = File.createTempFile("word_export_", ".docx");
-        tempWordFile.deleteOnExit();
-        
-        try (FileOutputStream fileOutputStream = new FileOutputStream(tempWordFile)) {
-            wordDocument.write(fileOutputStream);
-            fileOutputStream.flush();
-        }
-        
-        if (!tempWordFile.exists() || tempWordFile.length() == 0) {
-            throw new IOException("Word文档文件未创建或为空");
-        }
-        
-        return tempWordFile;
-    }
-    
-    /**
      * 发送错误响应
      */
     private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
@@ -164,19 +150,6 @@ public class PdfExportStrategy implements ExportStrategy {
             try {
                 document.close();
             } catch (IOException ignored) {}
-        }
-    }
-    
-    /**
-     * 删除文件
-     */
-    private void deleteFile(File file) {
-        if (file != null && file.exists()) {
-            try {
-                file.delete();
-            } catch (Exception e) {
-                log.warn("删除临时文件失败: {}", e.getMessage());
-            }
         }
     }
     
@@ -211,26 +184,28 @@ public class PdfExportStrategy implements ExportStrategy {
     }
     
     /**
-     * 将Word文档文件转换为PDF并输出
+     * 从内存中的docx字节流加载并转换为PDF输出（不经过临时文件）
      */
-    private void convertWordFileToPdf(File wordFile, String tempImageDir, File imageDir, 
+    private void convertDocxBytesToPdf(byte[] docxBytes, String tempImageDir,
                                        Integer year, HttpServletResponse response) throws IOException {
         WordprocessingMLPackage wordMLPackage = null;
         File tempFontDir = null;
         
         try {
             // 1. 创建临时字体目录（在加载Word文档之前，确保字体扫描设置生效）
-            tempFontDir = new File(System.getProperty("java.io.tmpdir") + File.separator + 
+            tempFontDir = new File(System.getProperty("java.io.tmpdir") + File.separator +
                 "pdf_fonts_" + System.currentTimeMillis());
             if (!tempFontDir.exists()) {
                 tempFontDir.mkdirs();
             }
             
-            // 2. 加载Word文档（此时系统字体扫描应该已被禁用）
+            // 2. 从内存流加载Word文档（避免磁盘IO）
             long loadStartTime = System.currentTimeMillis();
-            wordMLPackage = WordprocessingMLPackage.load(wordFile);
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(docxBytes)) {
+                wordMLPackage = WordprocessingMLPackage.load(bais);
+            }
             long loadEndTime = System.currentTimeMillis();
-            log.info("Word文档加载到WordprocessingMLPackage耗时: {}ms", loadEndTime - loadStartTime);
+            log.info("Word文档从内存流加载到WordprocessingMLPackage耗时: {}ms", loadEndTime - loadStartTime);
             
             // 3. 注册字体（在Word文档加载之后，避免影响文档加载）
             long fontStartTime = System.currentTimeMillis();

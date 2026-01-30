@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
@@ -124,12 +126,9 @@ public class WordExportStrategy implements ExportStrategy {
     }
     
     /**
-     * 创建Word文档（提取的公共方法，供PDF导出复用）
+     * 创建Word文档
      * 使用线程池异步并行加载数据库资源
-     *
-     * @param year 年份
-     * @return 填充好数据的Word文档对象
-     * @throws IOException 处理异常
+     * 使用Word格式属性设置单位文本的上标/下标，FOP在转换为PDF时能正确识别和渲染
      */
     public XWPFDocument createWordDocument(Integer year) throws IOException {
         // 1.1 异步任务1：获取总体碳排放情况（对应前端getTableData2 -> getJunzhi -> collegeCarbonEmission）
@@ -207,7 +206,7 @@ public class WordExportStrategy implements ExportStrategy {
                 mulberryList = extractedList;
             }
             
-            // 8. 填充表1数据
+            // 8. 填充表1数据（使用Word格式属性设置上标/下标，FOP能正确识别）
             if (!document.getTables().isEmpty()) {
                 XWPFTable firstTable = document.getTables().get(0);
                 XWPFUtils.replaceForTable(emissionAndConsumes, firstTable);
@@ -272,7 +271,7 @@ public class WordExportStrategy implements ExportStrategy {
             templateStream.close();
             
             // 使用OPCPackage打开，会自动忽略无效的目录条目
-            try (java.io.ByteArrayInputStream byteArrayStream = new java.io.ByteArrayInputStream(templateBytes)) {
+            try (ByteArrayInputStream byteArrayStream = new ByteArrayInputStream(templateBytes)) {
                 OPCPackage opcPackage = OPCPackage.open(byteArrayStream);
                 return new XWPFDocument(opcPackage);
             }
@@ -292,7 +291,7 @@ public class WordExportStrategy implements ExportStrategy {
      * 读取InputStream到字节数组
      */
     private byte[] readInputStreamToBytes(InputStream inputStream) throws IOException {
-        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         byte[] data = new byte[8192];
         int nRead;
         while ((nRead = inputStream.read(data, 0, data.length)) != -1) {

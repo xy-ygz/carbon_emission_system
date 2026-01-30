@@ -23,15 +23,12 @@ import java.util.List;
 @Slf4j
 public class PdfFontUtils {
     
+    /** fonts 目录下实际存在的字体文件 */
     private static final String[] FONT_FILE_NAMES = {
-        "SimSun.ttf",
-        "SourceHanSansSC-VF.ttf",
-        "SourceHanSansSC-Regular.ttf",
-        "SourceHanSansSC-Normal.ttf",
-        "SourceHanSansSC-Bold.ttf",
-        "SourceHanSans-Regular.ttf",
-        "NotoSansCJK-Regular.ttf",
-        "SimHei.ttf"
+        "NotoSerifCJKsc-Regular.otf",
+        "NotoSansCJKsc-VF.ttf",
+        "SourceHanSerifSC-VF.ttf",
+        "SimSun.ttf"
     };
     
     private static final String SYSTEM_SONGTI_PATH = "/System/Library/Fonts/Supplemental/Songti.ttc";
@@ -67,8 +64,8 @@ public class PdfFontUtils {
         long registerEndTime = System.currentTimeMillis();
         log.debug("字体注册到PhysicalFonts耗时: {}ms", registerEndTime - registerStartTime);
         
-        // 设置字体映射器
-        setFontMapper(wordMLPackage, simSunFontFile);
+        // 设置字体映射器（传入已复制的字体列表，便于按 URI 解析回退 CJK 字体）
+        setFontMapper(wordMLPackage, simSunFontFile, copiedFontFiles);
         
         long totalTime = System.currentTimeMillis() - startTime;
         log.debug("字体处理总耗时: {}ms", totalTime);
@@ -169,18 +166,21 @@ public class PdfFontUtils {
     }
     
     /**
-     * 创建SimSun字体副本
+     * 优先 Noto Sans CJK / 思源
      */
     private static File createSimSunCopy(List<File> copiedFontFiles, File tempFontDir) {
-        for (File fontFile : copiedFontFiles) {
-            if (fontFile.getName().contains("SourceHanSansSC-VF")) {
-                try {
-                    File simSunFile = new File(tempFontDir, "SimSun.ttf");
-                    Files.copy(fontFile.toPath(), simSunFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    PhysicalFonts.addPhysicalFont(simSunFile.toURI());
-                    return simSunFile;
-                } catch (Exception e) {
-                    log.warn("创建 SimSun.ttf 副本失败: {}", e.getMessage());
+        String[] preferForSimSun = {"NotoSansCJKsc-VF", "SourceHanSerifSC-VF", "NotoSerifCJKsc-Regular"};
+        for (String prefix : preferForSimSun) {
+            for (File fontFile : copiedFontFiles) {
+                if (fontFile.getName().contains(prefix)) {
+                    try {
+                        File simSunFile = new File(tempFontDir, "SimSun.ttf");
+                        Files.copy(fontFile.toPath(), simSunFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        PhysicalFonts.addPhysicalFont(simSunFile.toURI());
+                        return simSunFile;
+                    } catch (Exception e) {
+                        log.warn("创建 SimSun.ttf 副本失败: {}", e.getMessage());
+                    }
                 }
             }
         }
@@ -201,38 +201,77 @@ public class PdfFontUtils {
         }
     }
     
+    /** 已注册 CJK 字体的 (文件名前缀, 内部名称候选)，用于 getPhysicalFont(name, file.toURI()) */
+    private static final String[][] CJK_NAME_BY_FILE_PREFIX = {
+        {"NotoSerifCJKsc", "Noto Serif CJK SC", "Noto Serif CJK SC Regular", "Noto Serif CJK sc"},
+        {"NotoSansCJKsc", "Noto Sans CJK SC", "Noto Sans CJK SC Variable", "Noto Sans CJK sc"},
+        {"SourceHanSerifSC", "Source Han Serif SC", "Source Han Serif", "Source Han Serif SC Variable"},
+        {"SimSun.ttf", "SimSun"}
+    };
+
     /**
-     * 设置字体映射器
+     * 设置字体映射器：统一用已注册的 CJK 字体（含 ₂）作为回退，避免 FOP 用 Helvetica 导致 kgCO#。
      */
-    private static void setFontMapper(WordprocessingMLPackage wordMLPackage, File simSunFontFile) {
-        final File simSunFont = simSunFontFile;
+    private static void setFontMapper(WordprocessingMLPackage wordMLPackage, File simSunFontFile,
+                                     List<File> copiedFontFiles) {
+        final PhysicalFont fallbackCjkFont = resolveFallbackCjkFont(simSunFontFile, copiedFontFiles);
         BestMatchingMapper fontMapper = new BestMatchingMapper() {
             @Override
             public PhysicalFont get(String fontFamily) {
-                if (simSunFont != null) {
-                    try {
-                        List<PhysicalFont> fonts = PhysicalFonts.getPhysicalFont("SimSun", simSunFont.toURI());
-                        if (fonts != null && !fonts.isEmpty()) {
-                            return fonts.get(0);
-                        }
-                    } catch (Exception e) {
-                        log.debug("字体映射失败: {}", e.getMessage());
-                        // 忽略异常，使用默认映射
-                    }
+                if (fallbackCjkFont != null) {
+                    return fallbackCjkFont;
                 }
                 return super.get(fontFamily);
             }
         };
-        
         try {
             wordMLPackage.setFontMapper(fontMapper);
         } catch (Exception e) {
             log.warn("设置字体映射器失败: {}", e.getMessage());
         }
-        
-        if (simSunFont == null) {
-            log.warn("未找到 SimSun.ttf，使用 BestMatchingMapper 进行字体映射");
+        if (fallbackCjkFont == null) {
+            log.warn("未找到可用的 CJK 字体作为回退，PDF 中 ₂ 可能显示为 #");
+        } else {
+            log.info("PDF 字体回退已设置为 CJK 字体，用于正确显示 ₂ 等字形");
         }
+    }
+
+    /**
+     * 从已复制的字体文件中解析一个已注册的 CJK 字体（含 ₂），按 (内部名, URI) 逐个尝试。
+     */
+    private static PhysicalFont resolveFallbackCjkFont(File simSunFontFile, List<File> copiedFontFiles) {
+        if (simSunFontFile != null) {
+            try {
+                List<PhysicalFont> fonts = PhysicalFonts.getPhysicalFont("SimSun", simSunFontFile.toURI());
+                if (fonts != null && !fonts.isEmpty()) {
+                    return fonts.get(0);
+                }
+            } catch (Exception e) {
+                log.debug("按 SimSun URI 查找失败: {}", e.getMessage());
+            }
+        }
+        if (copiedFontFiles != null) {
+            for (File f : copiedFontFiles) {
+                String fileName = f.getName();
+                for (String[] row : CJK_NAME_BY_FILE_PREFIX) {
+                    if (!fileName.startsWith(row[0])) {
+                        continue;
+                    }
+                    for (int i = 1; i < row.length; i++) {
+                        try {
+                            List<PhysicalFont> fonts = PhysicalFonts.getPhysicalFont(row[i], f.toURI());
+                            if (fonts != null && !fonts.isEmpty()) {
+                                log.debug("解析到 CJK 回退字体: {} (文件: {})", row[i], fileName);
+                                return fonts.get(0);
+                            }
+                        } catch (Exception e) {
+                            log.trace("getPhysicalFont({}, {}) 失败: {}", row[i], fileName, e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
     
     /**

@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
+
 /**
  * 用户服务实现类
  *
@@ -32,7 +34,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean removeById(java.io.Serializable id) {
+    public boolean removeById(Serializable id) {
         userRoleMapper.deleteByUserId((Long) id);
         return super.removeById(id);
     }

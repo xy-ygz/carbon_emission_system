@@ -13,6 +13,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponseWrapper;
+import javax.servlet.WriteListener;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -215,20 +220,20 @@ public class AsyncExportService {
      * 用于捕获导出策略写入的数据
      * 使用HttpServletResponseWrapper来避免实现所有接口方法
      */
-    private static class VirtualHttpServletResponse extends javax.servlet.http.HttpServletResponseWrapper {
+    private static class VirtualHttpServletResponse extends HttpServletResponseWrapper {
         private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         private String contentType;
         private String fileName;
-        private javax.servlet.ServletOutputStream servletOutputStream;
+        private ServletOutputStream servletOutputStream;
 
         public VirtualHttpServletResponse() {
             super(new DummyHttpServletResponse());
         }
 
         @Override
-        public javax.servlet.ServletOutputStream getOutputStream() throws IOException {
+        public ServletOutputStream getOutputStream() throws IOException {
             if (servletOutputStream == null) {
-                servletOutputStream = new javax.servlet.ServletOutputStream() {
+                servletOutputStream = new ServletOutputStream() {
                     @Override
                     public void write(int b) throws IOException {
                         outputStream.write(b);
@@ -260,7 +265,7 @@ public class AsyncExportService {
                     }
 
                     @Override
-                    public void setWriteListener(javax.servlet.WriteListener listener) {
+                    public void setWriteListener(WriteListener listener) {
                         // 不支持异步写入
                     }
                 };
@@ -311,9 +316,9 @@ public class AsyncExportService {
          * 虚拟的HttpServletResponse实现
          * 用于作为HttpServletResponseWrapper的包装对象
          */
-        private static class DummyHttpServletResponse implements javax.servlet.http.HttpServletResponse {
+        private static class DummyHttpServletResponse implements HttpServletResponse {
             @Override
-            public void addCookie(javax.servlet.http.Cookie cookie) {}
+            public void addCookie(Cookie cookie) {}
 
             @Override
             public boolean containsHeader(String name) { return false; }
@@ -382,7 +387,7 @@ public class AsyncExportService {
             public String getContentType() { return null; }
 
             @Override
-            public javax.servlet.ServletOutputStream getOutputStream() throws IOException {
+            public ServletOutputStream getOutputStream() throws IOException {
                 throw new UnsupportedOperationException("Use wrapper's getOutputStream");
             }
 

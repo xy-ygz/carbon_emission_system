@@ -6,6 +6,7 @@ import com.bjfu.carbon.vo.EmissionMulberryVo;
 import com.bjfu.carbon.vo.MulberryDiagramVo;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import org.apache.poi.xwpf.usermodel.VerticalAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -46,6 +47,8 @@ import java.awt.*;
 import java.awt.geom.QuadCurve2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -70,8 +73,15 @@ public class XWPFUtils {
     
     // ==================== 图表字体样式配置 ====================
     
-    /** 图表字体名称：宋体 */
+    /** 图表字体名称：宋体（当未加载到含上下标的字体时使用） */
     private static final String CHART_FONT_NAME = "宋体";
+    /** 优先加载的字体（仅列举 fonts 目录下实际存在的文件），按优先级排序 */
+    private static final String[] CHART_FONT_FILE_PRIORITY = {
+        "NotoSerifCJKsc-Regular.otf",
+        "NotoSansCJKsc-VF.ttf",
+        "SourceHanSerifSC-VF.ttf",
+        "SimSun.ttf"
+    };
     
     /** 加载的中文字体对象 */
     private static volatile Font loadedChineseFont = null;
@@ -91,13 +101,9 @@ public class XWPFUtils {
     /** 重试延迟（毫秒） */
     private static final long RETRY_DELAY_MS = 500;
     
-    /**
-     * 静态初始化块：尝试加载中文字体文件（非阻塞）
-     * 如果失败，会在首次使用时重试
-     */
     static {
         // 异步尝试加载，不阻塞类初始化
-        loadChineseFont();
+        loadChineseFont(0);
     }
     
     /**
@@ -123,53 +129,55 @@ public class XWPFUtils {
                     log.info("重试加载中文字体文件（第{}次）...", retryCount);
                 }
                 
-                // 按优先级查找字体文件
+                // 按优先级查找并加载字体（某格式如 .otf 可能不被 Java 支持，失败则尝试下一个）
                 File[] fontDirs = getFontDirectories();
-                File fontFile = null;
-                
-                // 查找SimSun.ttf字体文件
-                for (File fontDir : fontDirs) {
-                    if (fontDir != null && fontDir.exists() && fontDir.isDirectory()) {
-                        File simSunFile = new File(fontDir, "SimSun.ttf");
-                        if (simSunFile.exists() && simSunFile.isFile() && simSunFile.length() > 0) {
-                            fontFile = simSunFile;
-                            log.info("找到字体文件: {}", fontFile.getAbsolutePath());
+                boolean loaded = false;
+                for (String fileName : CHART_FONT_FILE_PRIORITY) {
+                    File fontFile = null;
+                    for (File fontDir : fontDirs) {
+                        if (fontDir != null && fontDir.exists() && fontDir.isDirectory()) {
+                            File candidate = new File(fontDir, fileName);
+                            if (candidate.exists() && candidate.isFile() && candidate.length() > 0) {
+                                fontFile = candidate;
+                                break;
+                            }
+                        }
+                    }
+                    if (fontFile == null) {
+                        String resourcePath = "fonts/" + fileName;
+                        try (InputStream fontStream = XWPFUtils.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                            if (fontStream != null) {
+                                String ext = fileName.contains(".otf") ? ".otf" : ".ttf";
+                                File tempFontFile = File.createTempFile("chart_font_", ext);
+                                tempFontFile.deleteOnExit();
+                                Files.copy(fontStream, tempFontFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                fontFile = tempFontFile;
+                            }
+                        } catch (IOException e) {
+                            log.debug("classpath 中未找到或无法复制字体 {}: {}", resourcePath, e.getMessage());
+                        }
+                    }
+                    if (fontFile != null && fontFile.exists() && fontFile.length() > 0) {
+                        try {
+                            loadedChineseFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
+                            java.awt.GraphicsEnvironment ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
+                            ge.registerFont(loadedChineseFont);
+                            fontLoadSuccess = true;
+                            loaded = true;
+                            log.info("✓ 已成功加载并注册图表字体: {} (文件: {}, 重试次数: {})",
+                                    fontFile.getAbsolutePath(), fileName, retryCount);
                             break;
+                        } catch (Exception ex) {
+                            log.warn("字体文件加载失败，尝试下一个: {} - {}", fileName, ex.getMessage());
                         }
                     }
                 }
-                
-                // 如果文件系统找不到，从classpath加载
-                if (fontFile == null) {
-                    log.debug("文件系统中未找到字体文件，尝试从classpath加载...");
-                    try (java.io.InputStream fontStream = XWPFUtils.class.getClassLoader()
-                            .getResourceAsStream("fonts/SimSun.ttf")) {
-                        if (fontStream != null) {
-                            // 创建临时文件
-                            File tempFontFile = File.createTempFile("SimSun_", ".ttf");
-                            tempFontFile.deleteOnExit();
-                            Files.copy(fontStream, tempFontFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            fontFile = tempFontFile;
-                            log.info("从classpath加载字体文件到临时目录: {}", tempFontFile.getAbsolutePath());
-                        }
-                    }
-                }
-                
-                // 加载字体并注册到GraphicsEnvironment
-                if (fontFile != null && fontFile.exists() && fontFile.length() > 0) {
-                    log.info("正在注册字体到GraphicsEnvironment...");
-                    loadedChineseFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-                    java.awt.GraphicsEnvironment ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
-                    ge.registerFont(loadedChineseFont);
-                    fontLoadSuccess = true; // 标记为成功
-                    fontLoadAttempted = true; // 标记为已尝试
-                    log.info("✓ 已成功加载并注册中文字体: {} (重试次数: {})", fontFile.getAbsolutePath(), retryCount);
-                } else {
+                fontLoadAttempted = true;
+                if (!loaded) {
                     if (retryCount < MAX_RETRY_COUNT) {
-                        log.warn("未找到SimSun.ttf字体文件，将在{}ms后重试（第{}次）", RETRY_DELAY_MS * (retryCount + 1), retryCount + 1);
+                        log.warn("未找到可加载的字体文件，将在{}ms后重试（第{}次）", RETRY_DELAY_MS * (retryCount + 1), retryCount + 1);
                     } else {
-                        fontLoadAttempted = true; // 达到最大重试次数，标记为已尝试
-                        log.error("✗ 未找到SimSun.ttf字体文件（已重试{}次），将使用系统默认字体（可能导致中文显示为方块）", MAX_RETRY_COUNT);
+                        log.error("✗ 未找到可用字体文件（已重试{}次），将使用系统默认字体（可能导致中文或 CO₂ 下标不显示）", MAX_RETRY_COUNT);
                     }
                 }
             } catch (Exception e) {
@@ -181,13 +189,6 @@ public class XWPFUtils {
                 }
             }
         }
-    }
-    
-    /**
-     * 加载中文字体文件（首次调用）
-     */
-    private static void loadChineseFont() {
-        loadChineseFont(0);
     }
     
     /** 当前重试次数 */
@@ -321,8 +322,8 @@ public class XWPFUtils {
         
         if (loadedChineseFont != null) {
             try {
-                // 使用加载的字体创建派生字体
-                return loadedChineseFont.deriveFont(style, size);
+                // 使用加载的字体创建派生字体（显式 float 字号，便于可变字体 VF 正确实例化并渲染 ₂ 等字形）
+                return loadedChineseFont.deriveFont(style, (float) size);
             } catch (Exception e) {
                 log.warn("使用加载的字体创建派生字体失败，回退到字体名称: {}", e.getMessage());
                 return new Font(fontName, style, size);
@@ -349,46 +350,237 @@ public class XWPFUtils {
     private static final Font CHART_TITLE_FONT = createFont(CHART_FONT_NAME, Font.BOLD, 12);
     private static final Font CHART_TEXT_FONT = createFont(CHART_FONT_NAME, Font.PLAIN, 10);
     
-    /** 图3、图4、图5、图6图表样式配置（字体大小增加一倍，避免高分辨率下字体过小） */
-    private static final Font CHART3456_TITLE_FONT = createFont(CHART_FONT_NAME, Font.BOLD, 26);
-    private static final Font CHART3456_TEXT_FONT = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
-    private static final Font CHART3456_LEGEND_FONT = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
-    private static final Font CHART3456_AXIS_LABEL_FONT = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
-    private static final Font CHART3456_AXIS_TICK_FONT = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
+    /** 图3、图4、图5、图6 字体懒加载 */
+    private static volatile Font chart3456TitleFont;
+    private static volatile Font chart3456TextFont;
+    private static volatile Font chart3456LegendFont;
+    private static volatile Font chart3456AxisLabelFont;
+    private static volatile Font chart3456AxisTickFont;
+    private static final Object CHART3456_FONT_LOCK = new Object();
+
+    private static Font getChart3456TitleFont() {
+        if (chart3456TitleFont == null) {
+            synchronized (CHART3456_FONT_LOCK) {
+                if (chart3456TitleFont == null) {
+                    chart3456TitleFont = createFont(CHART_FONT_NAME, Font.BOLD, 26);
+                }
+            }
+        }
+        return chart3456TitleFont;
+    }
     
+    private static Font getChart3456TextFont() {
+        if (chart3456TextFont == null) {
+            synchronized (CHART3456_FONT_LOCK) {
+                if (chart3456TextFont == null) {
+                    chart3456TextFont = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
+                }
+            }
+        }
+        return chart3456TextFont;
+    }
+    
+    private static Font getChart3456LegendFont() {
+        if (chart3456LegendFont == null) {
+            synchronized (CHART3456_FONT_LOCK) {
+                if (chart3456LegendFont == null) {
+                    chart3456LegendFont = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
+                }
+            }
+        }
+        return chart3456LegendFont;
+    }
+    
+    private static Font getChart3456AxisLabelFont() {
+        if (chart3456AxisLabelFont == null) {
+            synchronized (CHART3456_FONT_LOCK) {
+                if (chart3456AxisLabelFont == null) {
+                    chart3456AxisLabelFont = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
+                }
+            }
+        }
+        return chart3456AxisLabelFont;
+    }
+    
+    private static Font getChart3456AxisTickFont() {
+        if (chart3456AxisTickFont == null) {
+            synchronized (CHART3456_FONT_LOCK) {
+                if (chart3456AxisTickFont == null) {
+                    chart3456AxisTickFont = createFont(CHART_FONT_NAME, Font.PLAIN, 20);
+                }
+            }
+        }
+        return chart3456AxisTickFont;
+    }
+
     // ==================== 公共工具方法 ====================
     
     /**
-     * 清理单位字符串中的特殊字符，避免 PDF 转换时显示为乱码
-     * FOP 在处理某些 Unicode 特殊字符（上标、下标等）时可能找不到对应字形，会显示为 #
-     * 
-     * @param unit 原始单位字符串
-     * @return 清理后的单位字符串
+     * 文本片段类型：普通文本、下标、上标
      */
-    private static String cleanUnitString(String unit) {
-        if (unit == null) {
-            return null;
-        }
-        
-        // 将 Unicode 下标字符转换为普通字符
-        unit = unit.replace("₂", "2").replace("₃", "3").replace("₄", "4")
-                  .replace("₅", "5").replace("₆", "6").replace("₇", "7")
-                  .replace("₈", "8").replace("₉", "9").replace("₀", "0");
-        
-        // 将 Unicode 上标字符转换为普通字符
-        unit = unit.replace("²", "2").replace("³", "3").replace("¹", "1")
-                  .replace("⁴", "4").replace("⁵", "5").replace("⁶", "6")
-                  .replace("⁷", "7").replace("⁸", "8").replace("⁹", "9")
-                  .replace("⁰", "0");
-        
-        return unit;
+    private enum TextSegmentType {
+        NORMAL,    // 普通文本
+        SUBSCRIPT, // 下标
+        SUPERSCRIPT // 上标
     }
     
     /**
-     * 获取临时图表文件目录路径
-     * 
-     * @return 临时目录路径
+     * 文本片段：表示单位字符串中的一个片段
      */
+    private static class TextSegment {
+        String text;
+        TextSegmentType type;
+        
+        TextSegment(String text, TextSegmentType type) {
+            this.text = text;
+            this.type = type;
+        }
+    }
+    
+    /**
+     * 解析单位字符串，识别上标/下标字符
+     * 例如："kgCO₂/Nm³" -> [NORMAL("kgCO"), SUBSCRIPT("2"), NORMAL("/Nm"), SUPERSCRIPT("3")]
+     */
+    private static List<TextSegment> parseUnitString(String unit) {
+        List<TextSegment> segments = new ArrayList<>();
+        if (unit == null || unit.isEmpty()) {
+            return segments;
+        }
+        
+        // Unicode下标字符映射：₂->2, ₃->3, 等等
+        Map<Character, Character> subscriptMap = new HashMap<>();
+        subscriptMap.put('\u2080', '0');
+        subscriptMap.put('\u2081', '1');
+        subscriptMap.put('\u2082', '2');
+        subscriptMap.put('\u2083', '3');
+        subscriptMap.put('\u2084', '4');
+        subscriptMap.put('\u2085', '5');
+        subscriptMap.put('\u2086', '6');
+        subscriptMap.put('\u2087', '7');
+        subscriptMap.put('\u2088', '8');
+        subscriptMap.put('\u2089', '9');
+        
+        // Unicode上标字符映射：¹->1, ²->2, ³->3, 等等
+        Map<Character, Character> superscriptMap = new HashMap<>();
+        superscriptMap.put('\u00B9', '1');
+        superscriptMap.put('\u00B2', '2');
+        superscriptMap.put('\u00B3', '3');
+        superscriptMap.put('\u2074', '4');
+        superscriptMap.put('\u2075', '5');
+        superscriptMap.put('\u2076', '6');
+        superscriptMap.put('\u2077', '7');
+        superscriptMap.put('\u2078', '8');
+        superscriptMap.put('\u2079', '9');
+        superscriptMap.put('\u2070', '0');
+        
+        StringBuilder currentText = new StringBuilder();
+        TextSegmentType currentType = TextSegmentType.NORMAL;
+        
+        for (int i = 0; i < unit.length(); i++) {
+            char c = unit.charAt(i);
+            
+            // 检查是否是下标字符
+            if (subscriptMap.containsKey(c)) {
+                // 如果之前有普通文本，先保存
+                if (currentText.length() > 0 && currentType == TextSegmentType.NORMAL) {
+                    segments.add(new TextSegment(currentText.toString(), TextSegmentType.NORMAL));
+                    currentText.setLength(0);
+                }
+                // 添加下标字符（转换为普通数字）
+                currentText.append(subscriptMap.get(c));
+                currentType = TextSegmentType.SUBSCRIPT;
+            }
+            // 检查是否是上标字符
+            else if (superscriptMap.containsKey(c)) {
+                // 如果之前有普通文本或下标文本，先保存
+                if (currentText.length() > 0 && currentType != TextSegmentType.SUPERSCRIPT) {
+                    segments.add(new TextSegment(currentText.toString(), currentType));
+                    currentText.setLength(0);
+                }
+                // 添加上标字符（转换为普通数字）
+                currentText.append(superscriptMap.get(c));
+                currentType = TextSegmentType.SUPERSCRIPT;
+            }
+            // 普通字符
+            else {
+                // 如果之前有下标或上标文本，先保存
+                if (currentText.length() > 0 && currentType != TextSegmentType.NORMAL) {
+                    segments.add(new TextSegment(currentText.toString(), currentType));
+                    currentText.setLength(0);
+                }
+                // 添加普通字符
+                currentText.append(c);
+                currentType = TextSegmentType.NORMAL;
+            }
+        }
+        
+        // 保存最后一个片段
+        if (currentText.length() > 0) {
+            segments.add(new TextSegment(currentText.toString(), currentType));
+        }
+        
+        return segments;
+    }
+    
+    /**
+     * 使用Word格式属性设置单元格文本（支持上标/下标）
+     * 将单位字符串解析为多个文本片段，使用多个XWPFRun分别设置格式
+     */
+    private static void setCellTextWithFormatting(XWPFTableCell cell, String unit) {
+        // 获取或创建段落
+        XWPFParagraph paragraph;
+        List<XWPFParagraph> paragraphs = cell.getParagraphs();
+        if (paragraphs.isEmpty()) {
+            paragraph = cell.addParagraph();
+        } else {
+            paragraph = paragraphs.get(0);
+            // 清空现有runs
+            for (int i = paragraph.getRuns().size() - 1; i >= 0; i--) {
+                paragraph.removeRun(i);
+            }
+        }
+        paragraph.setAlignment(ParagraphAlignment.CENTER);
+        
+        // 解析单位字符串
+        List<TextSegment> segments = parseUnitString(unit);
+        
+        // 如果没有片段，直接设置空文本
+        if (segments.isEmpty()) {
+            XWPFRun run = paragraph.createRun();
+            run.setText("");
+            return;
+        }
+        
+        // 为每个片段创建Run并设置格式
+        for (TextSegment segment : segments) {
+            XWPFRun run = paragraph.createRun();
+            run.setText(segment.text);
+            
+            // 根据片段类型设置格式
+            switch (segment.type) {
+                case SUBSCRIPT:
+                    run.setSubscript(VerticalAlign.SUBSCRIPT);
+                    break;
+                case SUPERSCRIPT:
+                    run.setSubscript(VerticalAlign.SUPERSCRIPT);
+                    break;
+                case NORMAL:
+                default:
+                    // 普通文本不需要特殊设置
+                    break;
+            }
+        }
+    }
+
+    /**
+     * 图3图例/系列名：返回 "CO2排放量"
+     * 由于Java的Graphics2D字体渲染，渲染图表中无法显示下标字符，统一使用CO2
+     */
+    private static String getChartSeriesNameCO2Emission() {
+        return "CO2排放量";
+    }
+    
+    /** 获取临时图表文件目录路径 */
     private static String getTempChartDirectory() {
         String tempDir = System.getProperty("java.io.tmpdir");
         if (!tempDir.endsWith(File.separator)) {
@@ -525,7 +717,6 @@ public class XWPFUtils {
             }
         }
     }
-    
     
     /**
      * 跨行合并单元格
@@ -1325,14 +1516,10 @@ public class XWPFUtils {
     
     /**
      * 填充表1：排放源消耗量表格
-     * 
-     * @param emissionAndConsumes 排放源消耗数据列表
-     * @param table Word表格对象
+     * 使用Word格式属性设置单位文本的上标/下标，FOP在转换为PDF时能正确识别和渲染
      */
     public static void replaceForTable(List<EmissionAndConsume> emissionAndConsumes, XWPFTable table) {
-        // 设置表格宽度和居中对齐
         setTableWidthAndAlignment(table);
-        
         for (int i = 0; i < emissionAndConsumes.size(); i++) {
             XWPFTableRow row = table.getRows().get(1);
             if (i != 0) {
@@ -1344,13 +1531,13 @@ public class XWPFUtils {
             List<XWPFTableCell> tableCells = row.getTableCells();
             tableCells.get(0).setText(emissionAndConsumes.get(i).getObjectCategory());
             tableCells.get(1).setText(String.valueOf(emissionAndConsumes.get(i).getObjectConsumption()));
-            // 处理单位中的特殊字符，避免PDF转换时显示为#
-            String unit = cleanUnitString(emissionAndConsumes.get(i).getUnit());
-            tableCells.get(2).setText(unit);
-            XWPFUtils.setStyle(row);
+            
+            // 使用Word格式属性设置单位文本（支持上标/下标）
+            String unit = emissionAndConsumes.get(i).getUnit();
+            setCellTextWithFormatting(tableCells.get(2), unit);
+            
+            setStyle(row);
         }
-        
-        // 设置三线表样式（表1）
         setThreeLineTableStyle(table);
     }
     
@@ -1415,7 +1602,7 @@ public class XWPFUtils {
             tableCells.get(2).setText(String.valueOf(emissionAndConsumes.get(i).getEmissionAmount()));
             BigDecimal bigDecimalChild = new BigDecimal(emissionAndConsumes.get(i).getEmissionAmount() + "");
             bigDecimal = bigDecimal.add(bigDecimalChild);
-            XWPFUtils.setStyle(row);
+            setStyle(row);
         }
         
         // 设置小计行的值（小计行应该在rowIndex + emissionAndConsumes.size()位置）
@@ -1441,7 +1628,7 @@ public class XWPFUtils {
         // 小计行：只设置第三列的数值，不修改第二列（保持模板原有内容）
         XWPFTableCell cell = cells.get(2);
         cell.setText(dirEmiNumberStr);
-        XWPFUtils.setStyle(row);
+        setStyle(row);
         
         // 合并第一列：从rowIndex到rowIndex + emissionAndConsumes.size()（包括小计行）
         // 重要：小计行也应该包含在合并范围内，因为小计行也是这个排放类型的一部分
@@ -1945,9 +2132,10 @@ public class XWPFUtils {
      */
     private static DefaultCategoryDataset createBarChartDataset(List<EmissionAndConsume> carbonEmissions) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        String seriesName = getChartSeriesNameCO2Emission();
         for (EmissionAndConsume eac : carbonEmissions) {
             double emissionAmountT = (eac.getEmissionAmount() != null ? eac.getEmissionAmount() : 0.0) / 1000.0;
-            dataset.addValue(emissionAmountT, "CO₂排放量", eac.getObjectCategory());
+            dataset.addValue(emissionAmountT, seriesName, eac.getObjectCategory());
         }
         return dataset;
     }
@@ -1987,8 +2175,8 @@ public class XWPFUtils {
         
         // 设置X轴
         CategoryAxis barAxis = barPlot.getDomainAxis();
-        barAxis.setLabelFont(CHART3456_AXIS_LABEL_FONT);
-        barAxis.setTickLabelFont(CHART3456_AXIS_TICK_FONT);
+        barAxis.setLabelFont(getChart3456AxisLabelFont());
+        barAxis.setTickLabelFont(getChart3456AxisTickFont());
         barAxis.setMaximumCategoryLabelLines(2);
         barAxis.setCategoryMargin(0.15);
         
@@ -2007,7 +2195,7 @@ public class XWPFUtils {
         // 设置图例
         chartBar.getLegend().setFrame(new BlockBorder(Color.WHITE));
         chartBar.getLegend().setPosition(RectangleEdge.RIGHT);
-        chartBar.getLegend().setItemFont(CHART3456_LEGEND_FONT);
+        chartBar.getLegend().setItemFont(getChart3456LegendFont());
         
         return chartBar;
     }
@@ -2019,9 +2207,9 @@ public class XWPFUtils {
      */
     private static StandardChartTheme createChartTheme3456() {
         StandardChartTheme sct = new StandardChartTheme("美化主题");
-        sct.setExtraLargeFont(CHART3456_TITLE_FONT);
-        sct.setLargeFont(CHART3456_TEXT_FONT);
-        sct.setRegularFont(CHART3456_TEXT_FONT);
+        sct.setExtraLargeFont(getChart3456TitleFont());
+        sct.setLargeFont(getChart3456TextFont());
+        sct.setRegularFont(getChart3456TextFont());
         sct.setChartBackgroundPaint(Color.WHITE);
         sct.setPlotBackgroundPaint(Color.WHITE);
         sct.setDomainGridlinePaint(new Color(230, 230, 230));
@@ -2132,13 +2320,13 @@ public class XWPFUtils {
         // 设置图例
         chartPie.getLegend().setFrame(new BlockBorder(Color.WHITE));
         chartPie.getLegend().setPosition(RectangleEdge.RIGHT);
-        chartPie.getLegend().setItemFont(CHART3456_LEGEND_FONT);
+        chartPie.getLegend().setItemFont(getChart3456LegendFont());
         
         // 调整标题位置
         if (chartPie.getTitle() != null && chartPie.getTitle() instanceof TextTitle) {
             TextTitle title = (TextTitle) chartPie.getTitle();
             title.setPadding(new RectangleInsets(0, -70, 0, 0));
-            title.setFont(CHART3456_TITLE_FONT);
+            title.setFont(getChart3456TitleFont());
         }
         
         // 减少图表整体的下方空白：设置图表的padding
@@ -2253,13 +2441,13 @@ public class XWPFUtils {
         categoryPlot.setDomainGridlinePaint(new Color(230, 230, 230));
         
         CategoryAxis categoryAxis = categoryPlot.getDomainAxis();
-        categoryAxis.setLabelFont(CHART3456_AXIS_LABEL_FONT);
-        categoryAxis.setTickLabelFont(CHART3456_AXIS_TICK_FONT);
+        categoryAxis.setLabelFont(getChart3456AxisLabelFont());
+        categoryAxis.setTickLabelFont(getChart3456AxisTickFont());
         categoryAxis.setMaximumCategoryLabelLines(2);
         categoryAxis.setCategoryMargin(0.1);
         
         chartStackBarCategory.getLegend().setFrame(new BlockBorder(Color.WHITE));
-        chartStackBarCategory.getLegend().setItemFont(CHART3456_LEGEND_FONT);
+        chartStackBarCategory.getLegend().setItemFont(getChart3456LegendFont());
         
         return chartStackBarCategory;
     }
@@ -2363,8 +2551,8 @@ public class XWPFUtils {
         typePlot.setDomainGridlinePaint(new Color(230, 230, 230));
         
         CategoryAxis typeAxis = typePlot.getDomainAxis();
-        typeAxis.setLabelFont(CHART3456_AXIS_LABEL_FONT);
-        typeAxis.setTickLabelFont(CHART3456_AXIS_TICK_FONT);
+        typeAxis.setLabelFont(getChart3456AxisLabelFont());
+        typeAxis.setTickLabelFont(getChart3456AxisTickFont());
         typeAxis.setMaximumCategoryLabelLines(2);
         typeAxis.setCategoryMargin(0.1);
         
@@ -2375,7 +2563,7 @@ public class XWPFUtils {
         typeRenderer.setSeriesPaint(2, new Color(155, 187, 89));    // 其它排放 - 绿色
         
         chartStackBarType.getLegend().setFrame(new BlockBorder(Color.WHITE));
-        chartStackBarType.getLegend().setItemFont(CHART3456_LEGEND_FONT);
+        chartStackBarType.getLegend().setItemFont(getChart3456LegendFont());
         
         return chartStackBarType;
     }
@@ -2418,7 +2606,7 @@ public class XWPFUtils {
             XWPFParagraph paragraph = run.getParagraph();
             paragraph.setAlignment(ParagraphAlignment.CENTER);
             // 使用try-with-resources确保文件流正确关闭
-            try (java.io.InputStream pictureStream = Files.newInputStream(chartFile.toPath())) {
+            try (InputStream pictureStream = Files.newInputStream(chartFile.toPath())) {
                 run.addPicture(pictureStream,
                         XWPFDocument.PICTURE_TYPE_PNG, fileName, 
                         Units.toEMU(width), Units.toEMU(height));
