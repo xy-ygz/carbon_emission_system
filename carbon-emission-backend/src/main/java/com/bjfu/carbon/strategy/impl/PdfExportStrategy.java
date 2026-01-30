@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * PDF导出策略实现（方案A：内存流不落盘）
+ * PDF导出策略实现
  * 复用Word导出逻辑：模板+占位符生成XWPFDocument后，写入内存字节流，
  * 由docx4j从InputStream加载并直接toFO输出PDF，避免临时Word文件的磁盘IO。
  *

@@ -5,7 +5,7 @@
       <div class="flex-box-headerr">
         <el-form :inline="true">
           <el-form-item label="选择年份：">
-            <el-date-picker v-model="showYear" type="year" value-format='yyyy' 
+            <el-date-picker v-model="showYear" type="year" value-format='yyyy'
               @change="getExportData" placeholder="选择年" size="small" style="width: 200px;">
             </el-date-picker>
           </el-form-item>
@@ -16,7 +16,7 @@
         </el-form>
       </div>
     </div>
-    
+
     <!-- PDF预览容器 -->
     <div id="pdf-preview" class="pdf-preview-container">
     <div class="exportTitle">
@@ -134,7 +134,7 @@
       <el-table :data="tableData3" border class="forest-table" :span-method="rowMergedMethod">
         <el-table-column prop="emissionType" label="排放类型" min-width="120" align="center"></el-table-column>
         <el-table-column prop="name" label="名称" min-width="200" align="center"></el-table-column>
-        <el-table-column prop="emissionAmount" label="碳排放量/tCO2" min-width="150" align="center">
+        <el-table-column prop="emissionAmount" label="碳排放量/tCO₂" min-width="150" align="center">
           <template slot-scope="scope">
             {{ ((scope.row.emissionAmount || 0)).toFixed(2) }}
           </template>
@@ -483,7 +483,7 @@ export default {
       if (!category || !this.exchangeSettings || this.exchangeSettings.length === 0) {
         return "kg";
       }
-      
+
       const setting = this.exchangeSettings.find(item => item.objectCategory === category);
       if (setting && setting.unit) {
         const unit = setting.unit;
@@ -493,7 +493,7 @@ export default {
         }
         return unit;
       }
-      
+
       return "kg";
     },
     getExportData() {
@@ -1074,7 +1074,7 @@ export default {
           this.maxEmissionMonthAmount = res.data.data.maxEmi;
           this.minEmissionMonth = res.data.data.minMonth;
           this.minEmissionMonthAmount = res.data.data.minEmi;
-          
+
           // 如果排放源名称为空，从categoryList中获取
           this.fillMissingEmissionSources();
         }
@@ -1143,10 +1143,10 @@ export default {
         } else if (res.data && res.data.code === 200 && Array.isArray(res.data.data)) {
           this.categoryList = res.data.data;
         }
-        
+
         // 提取排放源名称
         this.emissionSources = this.categoryList.map(cat => cat.objectCategory || cat.name || '').filter(name => name.trim() !== '');
-        
+
       }).catch(() => {
         this.$message.error("获取分类列表失败！");
         this.categoryList = [];
@@ -1172,15 +1172,15 @@ export default {
     fillMissingEmissionSources() {
       const sources = [this.emissionSource1, this.emissionSource2, this.emissionSource3, this.emissionSource4, this.emissionSource5];
       const amounts = [this.emissionSourceAmount1, this.emissionSourceAmount2, this.emissionSourceAmount3, this.emissionSourceAmount4, this.emissionSourceAmount5];
-      
+
       // 找出所有非空的排放源名称
       const existingSources = sources.filter(s => s && s.trim() !== '');
-      
+
       // 找出categoryList中不在existingSources中的分类名称
       const missingSources = this.categoryList
         .map(cat => cat.objectCategory || cat.name || '')
         .filter(name => name.trim() !== '' && !existingSources.includes(name));
-      
+
       // 填充空的排放源名称
       let missingIndex = 0;
       if (!this.emissionSource1 || this.emissionSource1.trim() === '') {
@@ -1207,33 +1207,33 @@ export default {
           console.error('图2容器不存在');
           return;
         }
-        
+
         // 如果图表已存在，先销毁
         if (this.inventoryChart) {
           this.inventoryChart.dispose();
         }
-        
+
         this.inventoryChart = echarts.init(chartDom);
-        
+
         // 获取实际的排放关系数据，类似TanResult.vue的处理
         const params = {};
         if (this.showYear && this.showYear !== '') {
           params.year = this.showYear;
         }
-        
+
         getCarbonMulberry(params).then(res => {
           if (res.data.code == 200) {
             // 处理返回的数据（可能是list字段或直接是数组）
             var dataList = res.data.data.list || res.data.data;
-            
+
             // 构建桑基图数据
             const sangShen = {
               data: [],//桑基图节点数据列表
               links: [],//节点间的边
             };
-            
+
             // 添加根节点
-            var rootNode = { 
+            var rootNode = {
               name: '校园碳排放核算范围及清单',
               itemStyle: {
                 color: '#4a7c3a' // 设置根节点颜色
@@ -1247,13 +1247,13 @@ export default {
               }
             };
             sangShen.data.push(rootNode);
-            
+
             // 收集所有分类名称
             const categoryNames = new Set();
             for (var i = 0; i < dataList.length; i++) {
               categoryNames.add(dataList[i].objectCategory);
             }
-            
+
             // 添加分类节点
             for (const category of categoryNames) {
               sangShen.data.push({ name: category });
@@ -1264,7 +1264,7 @@ export default {
                 value: 1 // 使用固定值，实际数据会在分类到排放类型的连接中体现
               });
             }
-            
+
             // 添加排放类型节点
             var databoj1 = { name: '直接排放' };
             var databoj2 = { name: '间接排放' };
@@ -1272,7 +1272,7 @@ export default {
             sangShen.data.push(databoj1);
             sangShen.data.push(databoj2);
             sangShen.data.push(databoj3);
-            
+
             // 处理分类到排放类型的连接关系
             for (var i = 0; i < dataList.length; i++) {
               for (var j = 0; j < dataList[i].emissionTypeAmount.length; j++) {
@@ -1285,7 +1285,7 @@ export default {
                 } else {
                   emissionType = '其他排放';
                 }
-                
+
                 var link = {
                   source: dataList[i].objectCategory,
                   target: emissionType,
@@ -1294,7 +1294,7 @@ export default {
                 sangShen.links.push(link);
               }
             }
-            
+
             const option = {
               tooltip: {
                 trigger: 'item',
@@ -1332,13 +1332,13 @@ export default {
                 }
               ]
             };
-            
+
             this.inventoryChart.setOption(option);
           }
         }).catch(error => {
           console.error('获取排放关系数据失败:', error);
         });
-        
+
         // 响应式调整
         window.addEventListener('resize', () => {
           if (this.inventoryChart) {
@@ -1359,17 +1359,17 @@ export default {
         });
         return;
       }
-      
+
       // 防止重复点击
       if (!this.exportStatus) {
         return;
       }
-      
+
       this.exportStatus = false;
       if (this.msg) {
         this.msg.close();
       }
-      
+
       // 根据格式显示不同的加载消息
       const formatName = format === 'pdf' ? 'PDF' : 'Word';
       this.msg = this.$message({
@@ -1377,7 +1377,7 @@ export default {
         type: 'info',
         message: `正在创建${formatName}导出任务...`
       });
-      
+
       // 构建请求参数
       const params = {
         format: format // 指定导出格式
@@ -1385,7 +1385,7 @@ export default {
       if (this.showYear && this.showYear !== '') {
         params.year = this.showYear;
       }
-      
+
       // 创建异步导出任务
       createExportTask(params).then((res) => {
         console.log('创建导出任务响应:', res);
@@ -1393,7 +1393,7 @@ export default {
           const taskId = res.data.data.taskId;
           console.log('任务ID:', taskId);
           this.currentTaskId = taskId;
-          
+
           // 更新消息
           this.msg.close();
           this.msg = this.$message({
@@ -1401,7 +1401,7 @@ export default {
             type: 'info',
             message: `${formatName}文档正在生成中，请稍候...`
           });
-          
+
           // 开始轮询查询任务状态
           this.startPollingTaskStatus(taskId, format, formatName);
         } else {
@@ -1419,7 +1419,7 @@ export default {
         this.$message.error("创建导出任务失败：" + (error.message || "未知错误"));
       });
     },
-    
+
     // 开始轮询查询任务状态
     startPollingTaskStatus(taskId, format, formatName) {
       // 清除之前的轮询
@@ -1427,32 +1427,32 @@ export default {
         clearInterval(this.pollingInterval);
         this.pollingInterval = null;
       }
-      
+
       // 重置错误计数
       this.pollingErrorCount = 0;
-      
+
       // 立即查询一次
       this.checkTaskStatus(taskId, format, formatName);
-      
+
       // 设置轮询，每2秒查询一次
       this.pollingInterval = setInterval(() => {
         this.checkTaskStatus(taskId, format, formatName);
       }, 2000);
     },
-    
+
     // 查询任务状态
     checkTaskStatus(taskId, format, formatName) {
       getExportTaskStatus(taskId).then((res) => {
         console.log('查询任务状态响应:', res);
-        
+
         if (res.data && res.data.code === 200 && res.data.data) {
           // 重置错误计数（查询成功）
           this.pollingErrorCount = 0;
-          
+
           const taskData = res.data.data;
           const status = taskData.status;
           console.log('任务状态:', status);
-          
+
           if (status === 'COMPLETED') {
             // 任务完成，停止轮询并下载文件
             this.stopPolling();
@@ -1483,7 +1483,7 @@ export default {
           // 任务不存在或已过期
           this.pollingErrorCount++;
           console.warn(`任务查询失败 (${this.pollingErrorCount}/${this.maxPollingErrors}):`, res.data);
-          
+
           // 只弹窗一次，超过最大错误次数后停止轮询
           if (this.pollingErrorCount >= this.maxPollingErrors) {
             const errorMsg = res.data.message || res.data.description || "任务不存在或已过期";
@@ -1498,7 +1498,7 @@ export default {
           // 响应格式异常
           this.pollingErrorCount++;
           console.warn(`响应格式异常 (${this.pollingErrorCount}/${this.maxPollingErrors}):`, res);
-          
+
           if (this.pollingErrorCount >= this.maxPollingErrors) {
             this.stopPolling();
             this.exportStatus = true;
@@ -1522,7 +1522,7 @@ export default {
         }
       });
     },
-    
+
     // 停止轮询
     stopPolling() {
       if (this.pollingInterval) {
@@ -1531,7 +1531,7 @@ export default {
       }
       this.currentTaskId = null;
     },
-    
+
     // 下载任务文件
     downloadTaskFile(taskId, fileName, format, formatName) {
       downloadExportTask(taskId).then((res) => {
@@ -1543,10 +1543,10 @@ export default {
             message: `${formatName}文档导出成功`
           });
           this.exportStatus = true;
-          
+
           // 根据格式设置正确的MIME类型和文件扩展名
           const mimeType = format === 'pdf' ? "application/pdf;charset=UTF-8" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=UTF-8";
-          
+
           // 创建下载链接
           let link = document.createElement("a");
           let blob = new Blob([res.data], {
@@ -1558,7 +1558,7 @@ export default {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          
+
           // 释放URL对象
           URL.revokeObjectURL(link.href);
         } else {
@@ -1718,7 +1718,7 @@ p {
   .export-controls {
     display: none;
   }
-  
+
   .pdf-preview-container {
     width: 100%;
     min-height: auto;
@@ -1726,7 +1726,7 @@ p {
     padding: 0;
     box-shadow: none;
   }
-  
+
   .tanExport {
     background: #fff;
   }
