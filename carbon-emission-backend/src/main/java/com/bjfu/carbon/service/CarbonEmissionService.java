@@ -10,6 +10,7 @@ import com.bjfu.carbon.vo.CarbonBuildingVo;
 import com.bjfu.carbon.vo.EmissionCategoryTimePeriodVo;
 import com.bjfu.carbon.vo.PlaceEmissionVo;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -128,7 +129,7 @@ public interface CarbonEmissionService extends IService<CarbonEmission> {
      * @param filename 文件名（用于识别文件格式）
      * @return 操作结果
      */
-    Result<String> batchImportFromFile(java.io.InputStream fileInputStream, String filename);
+    Result<String> batchImportFromFile(InputStream fileInputStream, String filename);
 
     /**
      * 获取年度报告数据（用于导出报告）

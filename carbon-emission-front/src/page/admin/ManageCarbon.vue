@@ -184,6 +184,7 @@
             </el-form-item>
           </el-form>
           <div slot="footer" class="dialog-footer">
+            <el-button type="info" icon="el-icon-download" @click="downloadTemplate">模板下载</el-button>
             <el-button type="primary" @click="addNewEmission">确定</el-button>
           </div>
         </el-dialog>
@@ -196,6 +197,8 @@ import request from "../../utils/request";
 import { getAllEmission, searchCarbonByName } from "../../api/carbonEmission";
 import { getPlace } from "../../api/placeInfo";
 import { getAllCategory } from "../../api/exchangeSetting";
+import { saveAs } from "file-saver";
+import { publicNetworkIpAndPort } from "../../api/globalVar";
 export default {
   data() {
     return {
@@ -455,12 +458,9 @@ export default {
       this.$message.error("请选择.xlsx进行上传");
     },
     UploadEnergyUrl: function () {
-      // el-upload 需要完整的 URL
+      // el-upload 需要完整的 URL，使用 globalVar.js 中的统一配置
       // Token 通过 :headers 属性传递（在 computed 中定义）
-      const baseURL = process.env.NODE_ENV === 'production' 
-        ? 'http://101.200.39.170:8080' 
-        : 'http://localhost:8080';
-      return baseURL + "/api/carbonEmission/excelCarbonEmission";
+      return publicNetworkIpAndPort() + "/api/carbonEmission/excelCarbonEmission";
     },
     addNewEmission() {
       var files = this.$refs.upload.uploadFiles
@@ -469,6 +469,21 @@ export default {
         return;
       }
       this.$refs.upload.submit();
+    },
+    downloadTemplate() {
+      request({
+        url: "/api/carbonEmission/downloadCarbonEmissionTemplate",
+        method: "get",
+        responseType: 'blob'
+      }).then(res => {
+        const blob = new Blob([res.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        saveAs(blob, '碳排放记录导入模板.xlsx');
+        this.$message.success("模板下载成功");
+      }).catch(error => {
+        this.$message.error("模板下载失败：" + (error.message || "未知错误"));
+      });
     },
     getAllEmission() {
       // console.log(" this.current", this.current)

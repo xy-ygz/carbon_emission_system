@@ -15,6 +15,7 @@ import com.bjfu.carbon.strategy.ExportStrategy;
 import com.bjfu.carbon.strategy.ExportStrategyFactory;
 import com.bjfu.carbon.utils.CachedHttpServletResponse;
 import com.bjfu.carbon.utils.CarbonUtils;
+import com.bjfu.carbon.utils.ExcelUtils;
 import com.bjfu.carbon.utils.FileCacheUtils;
 import com.bjfu.carbon.utils.ResourceService;
 import com.bjfu.carbon.vo.CarbonConsumptionVo;
@@ -271,6 +272,38 @@ public class CarbonEmissionController {
     @PreAuthorize("hasAuthority('CARBON_RECORD_DELETE')")
     public Object deleteCarbonEmissionById(String carbonEmissionId){
         return carbonEmissionService.deleteCarbonEmissionById(carbonEmissionId);
+    }
+
+    /**
+     * 下载碳排放记录导入模板
+     * 
+     * @param response HTTP响应对象
+     * @throws IOException IO异常
+     */
+    @RateLimit(ipLimit = 10, apiLimit = 100)
+    @GetMapping("/downloadCarbonEmissionTemplate")
+    public void downloadCarbonEmissionTemplate(HttpServletResponse response) throws IOException {
+        // 设置TransformerFactory，解决POI与Xalan的兼容性问题
+        try {
+            System.setProperty("javax.xml.transform.TransformerFactory", 
+                "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
+        } catch (Exception e) {
+            log.debug("设置 TransformerFactory 失败，使用默认值: {}", e.getMessage());
+        }
+        
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        String fileName = "碳排放记录导入模板.xlsx";
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + 
+            java.net.URLEncoder.encode(fileName, "UTF-8"));
+        
+        try {
+            // ExcelUtils内部已经使用ByteArrayOutputStream处理，直接调用即可
+            ExcelUtils.generateCarbonEmissionTemplate(response.getOutputStream());
+        } catch (Exception e) {
+            log.error("生成模板文件失败", e);
+            throw new IOException("生成模板文件失败：" + e.getMessage());
+        }
     }
 
     /**

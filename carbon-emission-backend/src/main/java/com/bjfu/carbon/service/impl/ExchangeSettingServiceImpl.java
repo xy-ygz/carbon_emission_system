@@ -7,6 +7,8 @@ import com.bjfu.carbon.mapper.ExchangeSettingMapper;
 import com.bjfu.carbon.utils.CarbonUtils;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
+
 /**
  *
  */
@@ -33,7 +35,7 @@ public class ExchangeSettingServiceImpl extends ServiceImpl<ExchangeSettingMappe
     }
 
     @Override
-    public boolean removeById(java.io.Serializable id) {
+    public boolean removeById(Serializable id) {
         boolean result = super.removeById(id);
         if (result) {
             CarbonUtils.getInstance().refreshCache();
