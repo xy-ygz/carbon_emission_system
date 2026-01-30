@@ -574,7 +574,7 @@ public class XWPFUtils {
 
     /**
      * 图3图例/系列名：返回 "CO2排放量"
-     * 由于Java的Graphics2D字体渲染，渲染图表中无法显示下标字符，统一使用CO2
+     * 由于Java的Graphics2D字体渲染，渲染图表中无法显示下标字符（CO₂），统一使用CO2
      */
     private static String getChartSeriesNameCO2Emission() {
         return "CO2排放量";
