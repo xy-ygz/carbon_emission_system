@@ -260,148 +260,21 @@ INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type
 ('AUDIT_LOG_QUERY', '查询日志', 'api', 999, NULL, NULL, NULL, 19, '查询日志权限', 1)
 ON DUPLICATE KEY UPDATE `permission_name`=VALUES(`permission_name`);
 
--- 第二步：修复parent_id关系
--- 修复数据输入模块的子权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'DATA_INPUT') AS tmp) WHERE permission_code IN ('SCHOOL_MANAGE', 'PLACE_MANAGE', 'EXCHANGE_SETTING', 'CARBON_RECORD') AND parent_id = 999;
-
--- 修复学校信息相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SCHOOL_MANAGE') AS tmp) WHERE permission_code IN ('SCHOOL_MANAGE_QUERY', 'SCHOOL_MANAGE_UPDATE') AND parent_id = 999;
-
--- 修复排放地点相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'PLACE_MANAGE') AS tmp) WHERE permission_code IN ('PLACE_MANAGE_ADD', 'PLACE_MANAGE_UPDATE', 'PLACE_MANAGE_DELETE', 'PLACE_MANAGE_QUERY') AND parent_id = 999;
-
--- 修复碳排放转化系数相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'EXCHANGE_SETTING') AS tmp) WHERE permission_code IN ('EXCHANGE_SETTING_ADD', 'EXCHANGE_SETTING_UPDATE', 'EXCHANGE_SETTING_DELETE', 'EXCHANGE_SETTING_QUERY') AND parent_id = 999;
-
--- 修复碳排放记录相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'CARBON_RECORD') AS tmp) WHERE permission_code IN ('CARBON_RECORD_ADD', 'CARBON_RECORD_UPDATE', 'CARBON_RECORD_DELETE', 'CARBON_RECORD_QUERY') AND parent_id = 999;
-
--- 修复能耗监测模块的子权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'ENERGY_MONITOR') AS tmp) WHERE permission_code IN ('ENERGY_MONITOR_DETAIL', 'ENERGY_AUDIT', 'ENERGY_CONTRAST') AND parent_id = 999;
-
--- 修复碳排放计算与减碳分析模块的子权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'CARBON_ANALYSIS') AS tmp) WHERE permission_code IN ('CARBON_RESULT', 'CARBON_ANALYSE') AND parent_id = 999;
-
--- 修复系统管理模块的子权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SYSTEM_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE', 'ROLE_MANAGE', 'PERMISSION_MANAGE', 'AUDIT_LOG') AND parent_id = 999;
-
--- 修复用户管理相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'USER_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE_ADD', 'USER_MANAGE_UPDATE', 'USER_MANAGE_DELETE', 'USER_MANAGE_QUERY', 'USER_MANAGE_RESET_PASSWORD', 'USER_MANAGE_ASSIGN_ROLE') AND parent_id = 999;
-
--- 修复角色管理相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'ROLE_MANAGE') AS tmp) WHERE permission_code IN ('ROLE_MANAGE_ADD', 'ROLE_MANAGE_UPDATE', 'ROLE_MANAGE_DELETE', 'ROLE_MANAGE_QUERY', 'ROLE_MANAGE_ASSIGN_PERMISSION') AND parent_id = 999;
-
--- 修复权限管理相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'PERMISSION_MANAGE') AS tmp) WHERE permission_code IN ('PERMISSION_MANAGE_ADD', 'PERMISSION_MANAGE_UPDATE', 'PERMISSION_MANAGE_DELETE', 'PERMISSION_MANAGE_QUERY') AND parent_id = 999;
-
--- 修复日志审计相关的细粒度权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'AUDIT_LOG') AS tmp) WHERE permission_code IN ('AUDIT_LOG_ADD', 'AUDIT_LOG_UPDATE', 'AUDIT_LOG_DELETE', 'AUDIT_LOG_QUERY') AND parent_id = 999;
-
--- 12. 为超级管理员分配所有权限
-INSERT INTO `role_permission` (`role_id`, `permission_id`)
-SELECT r.id, p.id
-FROM `role` r
-CROSS JOIN `permission` p
-WHERE r.role_code = 'SUPER_ADMIN'
-ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-
--- 13. 为管理员分配数据输入和查看权限
-INSERT INTO `role_permission` (`role_id`, `permission_id`)
-SELECT r.id, p.id
-FROM `role` r
-CROSS JOIN `permission` p
-WHERE r.role_code = 'ADMIN'
-  AND p.permission_code IN (
-    -- 数据输入模块（所有权限）
-    'DATA_INPUT', 'SCHOOL_MANAGE', 'SCHOOL_MANAGE_QUERY', 'SCHOOL_MANAGE_UPDATE',
-    'PLACE_MANAGE', 'PLACE_MANAGE_ADD', 'PLACE_MANAGE_UPDATE', 'PLACE_MANAGE_DELETE', 'PLACE_MANAGE_QUERY',
-    'EXCHANGE_SETTING', 'EXCHANGE_SETTING_ADD', 'EXCHANGE_SETTING_UPDATE', 'EXCHANGE_SETTING_DELETE', 'EXCHANGE_SETTING_QUERY',
-    'CARBON_RECORD', 'CARBON_RECORD_ADD', 'CARBON_RECORD_UPDATE', 'CARBON_RECORD_DELETE', 'CARBON_RECORD_QUERY',
-    -- 能耗监测模块
-    'ENERGY_MONITOR', 'ENERGY_MONITOR_DETAIL', 'ENERGY_AUDIT', 'ENERGY_CONTRAST',
-    -- 碳排放计算与减碳分析模块
-    'CARBON_ANALYSIS', 'CARBON_RESULT', 'CARBON_ANALYSE',
-    -- 报告生成
-    'REPORT_GENERATE',
-    -- 用户管理（查询权限）
-    'USER_MANAGE', 'USER_MANAGE_QUERY',
-    -- 日志审计（查询权限）
-    'AUDIT_LOG', 'AUDIT_LOG_QUERY'
-  )
-ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-
--- 14. 为普通用户分配基本权限
-INSERT INTO `role_permission` (`role_id`, `permission_id`)
-SELECT r.id, p.id
-FROM `role` r
-CROSS JOIN `permission` p
-WHERE r.role_code = 'USER'
-  AND p.permission_code IN (
-    -- 数据输入模块（只能查看和添加碳排放记录）
-    'DATA_INPUT', 'CARBON_RECORD', 'CARBON_RECORD_QUERY', 'CARBON_RECORD_ADD',
-    -- 能耗监测模块（只能查看）
-    'ENERGY_MONITOR', 'ENERGY_MONITOR_DETAIL',
-    -- 碳排放计算与减碳分析模块（只能查看）
-    'CARBON_ANALYSIS', 'CARBON_RESULT', 'CARBON_ANALYSE',
-    -- 日志审计（只能查看）
-    'AUDIT_LOG', 'AUDIT_LOG_QUERY'
-  )
-ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-
--- 15. 为游客角色分配所有查询权限（所有以QUERY结尾的权限和菜单权限，但排除日志审计）
-INSERT INTO `role_permission` (`role_id`, `permission_id`)
-SELECT r.id, p.id
-FROM `role` r
-CROSS JOIN `permission` p
-WHERE r.role_code = 'GUEST'
-  AND p.status = 1
-  AND (
-    -- 所有查询权限（以QUERY结尾），但排除日志审计查询权限
-    (p.permission_code LIKE '%_QUERY' AND p.permission_code NOT LIKE 'AUDIT_LOG%')
-    -- 或者所有菜单权限（用于访问页面），但排除日志审计菜单
-    OR (p.permission_type = 'menu' AND p.permission_code != 'AUDIT_LOG')
-  )
-ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
 -- ============================================
--- 初始化完成说明
--- ============================================
--- 1. 权限配置：
---    - 所有菜单权限和API权限已正确配置
---    - 权限树形结构已正确建立（通过parent_id关联）
---    - 数据输入模块：学校信息、排放地点、碳排放转化系数、碳排放记录（各包含增删改查权限）
---    - 能耗监测模块：能耗碳排放监测、能耗碳排放审计、能耗碳排放对比
---    - 碳排放计算与减碳分析模块：核算结果、减碳分析
---    - 报告生成模块：报告生成
---    - 系统管理模块：用户管理、角色管理、权限管理（各包含细粒度权限）
---
--- 2. 角色配置：
---    - SUPER_ADMIN（超级管理员，order=0）：拥有所有权限
---    - ADMIN（管理员，order=1）：拥有数据输入、查看、用户管理查询权限
---    - USER（普通用户，order=2）：拥有数据查看和添加碳排放记录权限、日志审计查询权限
---    - GUEST（游客，order=3）：拥有所有查询权限和菜单访问权限（但排除日志审计）
---
--- 3. 角色权限分配：
---    - 超级管理员：所有权限
---    - 管理员：数据输入（全部）、能耗监测（查看）、碳排放分析（查看）、报告生成、用户管理（查询）、日志审计（查询）
---    - 普通用户：数据输入（查看和添加碳排放记录）、能耗监测（查看）、碳排放分析（查看）、日志审计（查询）
---    - 游客：所有查询权限和菜单权限（但排除日志审计相关权限）
--- ============================================
-
--- ============================================
--- 用户表数据（从当前数据库导出）
+-- 用户表数据（初始化数据）
 -- ============================================
 INSERT INTO `user` (`name`, `username`, `password`, `department`, `phone`, `salt`, `status`) VALUES ("超级管理员","super_admin","2a884a75ca3d2d5745601426290f4e00","","","qT85",1) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `password`=VALUES(`password`), `department`=VALUES(`department`), `phone`=VALUES(`phone`), `salt`=VALUES(`salt`), `status`=VALUES(`status`);
 INSERT INTO `user` (`name`, `username`, `password`, `department`, `phone`, `salt`, `status`) VALUES ("管理员","admin","5a73d468fb5ae05627185dd7f607cc8a","","","%8yT",1) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `password`=VALUES(`password`), `department`=VALUES(`department`), `phone`=VALUES(`phone`), `salt`=VALUES(`salt`), `status`=VALUES(`status`);
 INSERT INTO `user` (`name`, `username`, `password`, `department`, `phone`, `salt`, `status`) VALUES ("普通用户","user","a6d985395468ab08c4b87c550e6b7d94","","","c9^T",1) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `password`=VALUES(`password`), `department`=VALUES(`department`), `phone`=VALUES(`phone`), `salt`=VALUES(`salt`), `status`=VALUES(`status`);
 
 -- ============================================
--- 学校信息表数据（从当前数据库导出）
+-- 学校信息表数据（初始化数据）
 -- ============================================
 INSERT INTO `school` (`school_name`, `total_number`, `student_number`, `teacher_number`, `green_area`, `building_area`, `total_area`, `image_url`) VALUES ("北京林业大学",26119,25693,1412,94000,24857,464000,"https://pic1.zhimg.com/v2-9bddb0e0db1c9a22d22a392c23c27b65_1440w.jpg?source=172ae18b") ON DUPLICATE KEY UPDATE `school_name`=VALUES(`school_name`), `total_number`=VALUES(`total_number`), `student_number`=VALUES(`student_number`), `teacher_number`=VALUES(`teacher_number`), `green_area`=VALUES(`green_area`), `building_area`=VALUES(`building_area`), `total_area`=VALUES(`total_area`), `image_url`=VALUES(`image_url`);
 
 -- ============================================
--- 地点信息表数据（从当前数据库导出）
+-- 地点信息表数据（初始化数据）
 -- ============================================
 INSERT INTO `place_info` (`name`, `population`, `area`) VALUES ("校园道路",15000,6000.00) ON DUPLICATE KEY UPDATE `population`=VALUES(`population`), `area`=VALUES(`area`);
 INSERT INTO `place_info` (`name`, `population`, `area`) VALUES ("东区食堂",10000,2000.00) ON DUPLICATE KEY UPDATE `population`=VALUES(`population`), `area`=VALUES(`area`);
@@ -410,7 +283,7 @@ INSERT INTO `place_info` (`name`, `population`, `area`) VALUES ("学研教学楼
 INSERT INTO `place_info` (`name`, `population`, `area`) VALUES ("5号宿舍楼",500,1200.00) ON DUPLICATE KEY UPDATE `population`=VALUES(`population`), `area`=VALUES(`area`);
 
 -- ============================================
--- 碳排放转化系数表数据（从当前数据库导出）
+-- 碳排放转化系数表数据（初始化数据）
 -- ============================================
 INSERT INTO `exchange_setting` (`object_category`, `exchange_coefficient`, `unit`) VALUES ("电力",0.685000,"kgCO₂/kWh") ON DUPLICATE KEY UPDATE `exchange_coefficient`=VALUES(`exchange_coefficient`), `unit`=VALUES(`unit`);
 INSERT INTO `exchange_setting` (`object_category`, `exchange_coefficient`, `unit`) VALUES ("热力（天然气）",2.160000,"kgCO₂/Nm³") ON DUPLICATE KEY UPDATE `exchange_coefficient`=VALUES(`exchange_coefficient`), `unit`=VALUES(`unit`);
@@ -419,7 +292,7 @@ INSERT INTO `exchange_setting` (`object_category`, `exchange_coefficient`, `unit
 INSERT INTO `exchange_setting` (`object_category`, `exchange_coefficient`, `unit`) VALUES ("生物材料（PHA）",1.200000,"kgCO₂e/kg") ON DUPLICATE KEY UPDATE `exchange_coefficient`=VALUES(`exchange_coefficient`), `unit`=VALUES(`unit`);
 
 -- ============================================
--- 碳排放表数据（从当前数据库导出）
+-- 碳排放表数据（初始化数据）
 -- ============================================
 INSERT INTO `carbon_emission` (`name`, `category`, `consumption`, `purpose`, `year`, `month`, `amount`, `place`, `emission_type`) VALUES ("2025.01-学研教学楼用电","电力",45000.00,"日常用电",2025,1,30825.00,"学研教学楼",1) ON DUPLICATE KEY UPDATE `consumption`=VALUES(`consumption`), `purpose`=VALUES(`purpose`), `amount`=VALUES(`amount`), `place`=VALUES(`place`), `emission_type`=VALUES(`emission_type`);
 INSERT INTO `carbon_emission` (`name`, `category`, `consumption`, `purpose`, `year`, `month`, `amount`, `place`, `emission_type`) VALUES ("2025.01-5号宿舍楼用电","电力",32000.00,"宿舍用电",2025,1,21920.00,"5号宿舍楼",1) ON DUPLICATE KEY UPDATE `consumption`=VALUES(`consumption`), `purpose`=VALUES(`purpose`), `amount`=VALUES(`amount`), `place`=VALUES(`place`), `emission_type`=VALUES(`emission_type`);
@@ -613,7 +486,7 @@ INSERT INTO `role` (`role_code`, `role_name`, `description`, `status`, `order`) 
 INSERT INTO `role` (`role_code`, `role_name`, `description`, `status`, `order`) VALUES ("GUEST","游客","未登录用户，只能进行查询操作",1,3) ON DUPLICATE KEY UPDATE `role_name`=VALUES(`role_name`), `description`=VALUES(`description`), `status`=VALUES(`status`), `order`=VALUES(`order`);
 
 -- ============================================
--- 权限表数据（从当前数据库导出）
+-- 权限表数据（初始化数据）
 -- ============================================
 INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type`, `parent_id`, `path`, `component`, `icon`, `sort_order`, `description`, `status`) VALUES ("DATA_INPUT","数据输入","menu",0,"/Tan",NULL,"el-icon-s-data",1,"数据输入模块",1) ON DUPLICATE KEY UPDATE `permission_name`=VALUES(`permission_name`), `permission_type`=VALUES(`permission_type`), `parent_id`=VALUES(`parent_id`), `path`=VALUES(`path`), `component`=VALUES(`component`), `icon`=VALUES(`icon`), `sort_order`=VALUES(`sort_order`), `description`=VALUES(`description`), `status`=VALUES(`status`);
 INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type`, `parent_id`, `path`, `component`, `icon`, `sort_order`, `description`, `status`) VALUES ("SCHOOL_MANAGE","学校信息","menu",1,"/Tan/ManageSchool","ManageSchool","el-icon-school",0,"学校信息管理",1) ON DUPLICATE KEY UPDATE `permission_name`=VALUES(`permission_name`), `permission_type`=VALUES(`permission_type`), `parent_id`=VALUES(`parent_id`), `path`=VALUES(`path`), `component`=VALUES(`component`), `icon`=VALUES(`icon`), `sort_order`=VALUES(`sort_order`), `description`=VALUES(`description`), `status`=VALUES(`status`);
@@ -663,127 +536,170 @@ INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type
 INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type`, `parent_id`, `path`, `component`, `icon`, `sort_order`, `description`, `status`) VALUES ("PERMISSION_MANAGE_QUERY","查询权限","api",31,NULL,NULL,NULL,15,"查询权限",1) ON DUPLICATE KEY UPDATE `permission_name`=VALUES(`permission_name`), `permission_type`=VALUES(`permission_type`), `parent_id`=VALUES(`parent_id`), `path`=VALUES(`path`), `component`=VALUES(`component`), `icon`=VALUES(`icon`), `sort_order`=VALUES(`sort_order`), `description`=VALUES(`description`), `status`=VALUES(`status`);
 
 -- ============================================
--- 用户角色关联表数据（从当前数据库导出）
+-- 用户角色关联表数据（初始化数据）
 -- ============================================
 INSERT INTO `user_role` (`user_id`, `role_id`) VALUES (1,1) ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`);
 INSERT INTO `user_role` (`user_id`, `role_id`) VALUES (2,2) ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`);
 INSERT INTO `user_role` (`user_id`, `role_id`) VALUES (3,3) ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`);
 
 -- ============================================
--- 角色权限关联表数据（从当前数据库导出）
+-- 角色权限关联表数据（初始化数据）
 -- ============================================
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,1) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,2) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,3) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,4) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,5) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,6) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,7) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,8) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,9) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,10) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,11) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,12) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,13) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,14) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,15) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,16) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,17) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,18) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,19) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,20) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,21) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,22) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,23) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,24) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,25) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,26) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,27) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,28) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,29) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,30) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,31) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,32) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,33) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,34) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,35) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,36) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,37) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,38) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,39) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,40) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,41) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,42) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,43) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,44) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,45) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (1,46) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,1) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,2) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,3) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,4) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,5) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,6) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,7) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,8) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,9) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,10) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,11) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,12) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,13) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,14) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,15) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,16) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,17) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,18) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,19) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,20) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,21) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,22) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,23) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,24) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,25) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,26) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,27) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,29) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,32) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,33) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,34) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,35) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,36) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,37) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,41) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (2,46) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,1) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,7) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,8) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,14) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,15) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,19) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,20) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,21) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,22) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,23) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,24) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,25) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,26) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,27) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,41) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (3,46) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,1) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,2) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,3) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,7) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,8) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,10) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,14) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,15) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,19) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,20) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,21) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,22) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,23) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,24) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,25) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,26) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
-INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES (4,27) ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (1, 1, 1, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (2, 1, 20, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (3, 1, 24, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (4, 1, 27, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (5, 1, 28, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (6, 1, 2, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (7, 1, 3, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (8, 1, 10, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (9, 1, 15, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (10, 1, 8, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (11, 1, 9, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (12, 1, 4, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (13, 1, 5, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (14, 1, 6, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (15, 1, 7, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (16, 1, 11, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (17, 1, 12, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (18, 1, 13, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (19, 1, 14, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (20, 1, 16, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (21, 1, 17, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (22, 1, 18, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (23, 1, 19, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (24, 1, 21, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (25, 1, 22, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (26, 1, 23, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (27, 1, 25, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (28, 1, 26, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (29, 1, 29, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (30, 1, 30, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (31, 1, 31, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (32, 1, 32, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (33, 1, 33, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (34, 1, 34, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (35, 1, 35, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (36, 1, 36, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (37, 1, 37, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (38, 1, 38, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (39, 1, 39, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (40, 1, 40, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (41, 1, 41, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (42, 1, 42, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (43, 1, 43, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (44, 1, 44, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (45, 1, 45, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (46, 1, 46, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (47, 1, 47, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (48, 1, 48, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (49, 1, 49, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (50, 1, 50, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (51, 1, 51, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (64, 2, 32, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (65, 2, 51, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (66, 2, 26, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (67, 2, 24, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (68, 2, 15, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (69, 2, 16, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (71, 2, 19, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (72, 2, 17, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (73, 2, 25, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (74, 2, 1, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (75, 2, 22, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (76, 2, 23, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (77, 2, 20, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (78, 2, 21, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (79, 2, 10, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (80, 2, 11, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (82, 2, 14, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (83, 2, 12, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (84, 2, 3, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (85, 2, 4, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (87, 2, 7, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (88, 2, 5, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (89, 2, 27, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (90, 2, 2, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (91, 2, 8, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (92, 2, 9, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (93, 2, 29, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (94, 2, 36, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (95, 3, 32, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (96, 3, 51, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (97, 3, 26, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (98, 3, 24, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (99, 3, 15, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (100, 3, 16, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (101, 3, 19, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (102, 3, 25, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (103, 3, 1, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (104, 3, 20, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (105, 3, 21, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (110, 4, 1, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (111, 4, 2, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (112, 4, 3, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (113, 4, 7, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (114, 4, 8, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (115, 4, 10, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (116, 4, 14, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (117, 4, 15, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (118, 4, 19, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (119, 4, 20, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (120, 4, 21, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (121, 4, 22, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (122, 4, 23, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (123, 4, 24, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (124, 4, 25, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (125, 4, 26, '2026-02-03 16:38:10');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (216, 2, 33, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (217, 2, 34, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (220, 2, 37, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (224, 3, 7, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (225, 3, 8, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (226, 3, 14, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (231, 3, 22, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (232, 3, 23, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (236, 3, 27, '2026-02-03 16:38:11');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (256, 2, 38, '2026-02-03 16:41:02');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (257, 2, 42, '2026-02-03 16:41:02');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (258, 2, 47, '2026-02-03 16:41:02');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (259, 3, 42, '2026-02-03 16:41:21');
+INSERT INTO `role_permission` (`id`, `role_id`, `permission_id`, `created_time`) VALUES (260, 3, 47, '2026-02-03 16:41:21');
+
+
+-- 修复parent_id关系
+-- 修复数据输入模块的子权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'DATA_INPUT') AS tmp) WHERE permission_code IN ('SCHOOL_MANAGE', 'PLACE_MANAGE', 'EXCHANGE_SETTING', 'CARBON_RECORD') AND parent_id = 999;
+
+-- 修复学校信息相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SCHOOL_MANAGE') AS tmp) WHERE permission_code IN ('SCHOOL_MANAGE_QUERY', 'SCHOOL_MANAGE_UPDATE') AND parent_id = 999;
+
+-- 修复排放地点相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'PLACE_MANAGE') AS tmp) WHERE permission_code IN ('PLACE_MANAGE_ADD', 'PLACE_MANAGE_UPDATE', 'PLACE_MANAGE_DELETE', 'PLACE_MANAGE_QUERY') AND parent_id = 999;
+
+-- 修复碳排放转化系数相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'EXCHANGE_SETTING') AS tmp) WHERE permission_code IN ('EXCHANGE_SETTING_ADD', 'EXCHANGE_SETTING_UPDATE', 'EXCHANGE_SETTING_DELETE', 'EXCHANGE_SETTING_QUERY') AND parent_id = 999;
+
+-- 修复碳排放记录相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'CARBON_RECORD') AS tmp) WHERE permission_code IN ('CARBON_RECORD_ADD', 'CARBON_RECORD_UPDATE', 'CARBON_RECORD_DELETE', 'CARBON_RECORD_QUERY') AND parent_id = 999;
+
+-- 修复能耗监测模块的子权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'ENERGY_MONITOR') AS tmp) WHERE permission_code IN ('ENERGY_MONITOR_DETAIL', 'ENERGY_AUDIT', 'ENERGY_CONTRAST') AND parent_id = 999;
+
+-- 修复碳排放计算与减碳分析模块的子权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'CARBON_ANALYSIS') AS tmp) WHERE permission_code IN ('CARBON_RESULT', 'CARBON_ANALYSE') AND parent_id = 999;
+
+-- 修复系统管理模块的子权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SYSTEM_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE', 'ROLE_MANAGE', 'PERMISSION_MANAGE', 'AUDIT_LOG') AND parent_id = 999;
+
+-- 修复用户管理相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'USER_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE_ADD', 'USER_MANAGE_UPDATE', 'USER_MANAGE_DELETE', 'USER_MANAGE_QUERY', 'USER_MANAGE_RESET_PASSWORD', 'USER_MANAGE_ASSIGN_ROLE') AND parent_id = 999;
+
+-- 修复角色管理相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'ROLE_MANAGE') AS tmp) WHERE permission_code IN ('ROLE_MANAGE_ADD', 'ROLE_MANAGE_UPDATE', 'ROLE_MANAGE_DELETE', 'ROLE_MANAGE_QUERY', 'ROLE_MANAGE_ASSIGN_PERMISSION') AND parent_id = 999;
+
+-- 修复权限管理相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'PERMISSION_MANAGE') AS tmp) WHERE permission_code IN ('PERMISSION_MANAGE_ADD', 'PERMISSION_MANAGE_UPDATE', 'PERMISSION_MANAGE_DELETE', 'PERMISSION_MANAGE_QUERY') AND parent_id = 999;
+
+-- 修复日志审计相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'AUDIT_LOG') AS tmp) WHERE permission_code IN ('AUDIT_LOG_ADD', 'AUDIT_LOG_UPDATE', 'AUDIT_LOG_DELETE', 'AUDIT_LOG_QUERY') AND parent_id = 999;
