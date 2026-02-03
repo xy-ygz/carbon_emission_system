@@ -38,14 +38,14 @@ public interface CarbonEmissionService extends IService<CarbonEmission> {
 
     /**
      * 条件分页查询所有碳排放记录
-     * @param current
-     * @param size
-     * @param name 可为空
-     * @param year 可为空
-     * @param month 可为空
+     * @param current 当前页码
+     * @param size 每页大小
+     * @param name 名称（可为空，模糊查询）
+     * @param year 年份（必填，由 Controller 层保证）
+     * @param month 月份（可为空，为空时查询整年数据）
      * @return
      */
-    IPage<CarbonEmission> pageByObjectName(int current, int size, String name, String year, String month);
+    IPage<CarbonEmission> pageByObjectName(int current, int size, String name, int year, Integer month);
 
     Result<Map<String, Object>> getMulberryData(int actualYear, Integer month);
 

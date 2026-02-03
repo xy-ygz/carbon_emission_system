@@ -490,10 +490,16 @@ export default {
       // debugger
       getAllEmission({ current: this.current, size: this.size, name: this.name, year: this.year, month: this.month }).then(res => {
         // debugger
-        // console.log("能耗列表res")
-        // console.log(res)
-        this.tableData = res.data.records
-        this.total = res.data.total;
+        // 兼容新旧两种返回格式：新格式是 Result<Map>，旧格式是 IPage
+        const responseData = res.data.data || res.data;
+        this.tableData = responseData.records || [];
+        this.total = responseData.total || 0;
+        
+        // 回显实际使用的年份
+        if (responseData.actualYear !== undefined && responseData.actualYear !== null) {
+          this.year = String(responseData.actualYear);
+        }
+        
         for (var i = 0; i < this.total; i++) {
           if (this.tableData[i] != null && this.tableData[i].emissionType == "0") {
             this.tableData[i].emissionType = "直接排放";
@@ -505,8 +511,6 @@ export default {
             this.tableData[i].emissionType = "其他排放";
           }
         }
-
-        this.tableData.emissionType = '直接排放'
         // console.log(res.data.total);
       })
     },

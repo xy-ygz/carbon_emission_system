@@ -1,12 +1,12 @@
 package com.bjfu.carbon.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bjfu.carbon.common.ErrorCode;
 import com.bjfu.carbon.common.Result;
 import com.bjfu.carbon.common.ResultUtils;
+import com.bjfu.carbon.exception.BusinessException;
 import com.bjfu.carbon.domain.CarbonEmission;
 import com.bjfu.carbon.domain.EmissionAndConsume;
 import com.bjfu.carbon.domain.PlaceInfo;
@@ -33,7 +33,6 @@ import com.bjfu.carbon.vo.TimeEmissionVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.io.InputStream;
 import java.text.DecimalFormat;
@@ -110,20 +109,60 @@ public class CarbonEmissionServiceImpl extends ServiceImpl<CarbonEmissionMapper,
         return carbonEmissionMapper.selectAllCarbonEmissionByTimeRange(startYear, startMonth, endYear, endMonth);
     }
 
+    /**
+     * 最大查询页码（防止深分页问题）
+     */
+    private static final int MAX_PAGE_NUMBER = 1000;
+    
+    /**
+     * 默认分页大小上限
+     */
+    private static final int MAX_PAGE_SIZE = 100;
+
     @Override
-    public IPage<CarbonEmission> pageByObjectName(int current, int size, String name, String year, String month) {
+    public IPage<CarbonEmission> pageByObjectName(int current, int size, String name, int year, Integer month) {
+        // 1. 限制最大页码
+        if (current > MAX_PAGE_NUMBER) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, 
+                String.format("页码不能超过 %d 页，请缩小查询范围或添加筛选条件", MAX_PAGE_NUMBER));
+        }
+        
+        // 2. 限制分页大小
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+            log.warn("分页大小超过限制，已自动调整为: {}", MAX_PAGE_SIZE);
+        }
+
         Page<CarbonEmission> page = new Page<>(current, size);
 
-        LambdaQueryWrapper<CarbonEmission> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.like(StringUtils.hasText(name), CarbonEmission::getName, name);
-        if (StringUtils.hasText(year)) {
-            queryWrapper.eq(CarbonEmission::getYear, Integer.parseInt(year));
-        }
-        if (StringUtils.hasText(month)) {
-            queryWrapper.eq(CarbonEmission::getMonth, Integer.parseInt(month));
-        }
-
-        return carbonEmissionMapper.selectPage(page, queryWrapper);
+        // 3. 使用优化的分页查询（子查询优化，避免全表排序）
+        // 计算偏移量
+        long offset = (long) (current - 1) * size;
+        
+        // 优化分页查询：先通过索引获取ID，再根据ID查询
+        // 优先对 year 使用 idx_year 索引
+        // 如果 month 也有值，可以使用 idx_year_month 联合索引
+        // name 的 LIKE '%xxx%' 作为后置过滤条件
+        List<CarbonEmission> records = carbonEmissionMapper.selectPageOptimized(
+            name,
+            String.valueOf(year),
+            month != null ? String.valueOf(month) : null,
+            offset,
+            size
+        );
+        
+        // 优化查询总数
+        Integer total = carbonEmissionMapper.selectTotalCount(
+            name, 
+            String.valueOf(year),
+            month != null ? String.valueOf(month) : null
+        );
+        
+        // 构建分页结果
+        page.setRecords(records);
+        page.setTotal(total != null ? total : 0);
+        
+        return page;
     }
 
     @Override

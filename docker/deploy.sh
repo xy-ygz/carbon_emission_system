@@ -124,16 +124,31 @@ echo -e "${GREEN}✓ 配置检查完成${NC}"
 echo -e "${YELLOW}[5/5] 启动 Docker 容器...${NC}"
 cd "$DOCKER_DIR"
 
-# 停止并删除旧容器（如果存在）
+# 停止并删除旧容器和volumes（如果存在）
 echo "停止现有容器..."
-docker-compose down 2>/dev/null || true
+docker-compose down -v 2>/dev/null || true
 
 # 启动容器
 echo "启动容器..."
 docker-compose up -d
 
-# 等待容器启动
-echo "等待容器启动..."
+# 等待MySQL容器启动并完成初始化
+echo "等待MySQL容器启动并完成数据库初始化..."
+sleep 5
+
+# 检查MySQL容器是否就绪
+echo "检查MySQL容器状态..."
+for i in {1..30}; do
+    if docker exec carbon-mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+        echo "MySQL容器已就绪"
+        break
+    fi
+    echo "等待MySQL启动... ($i/30)"
+    sleep 2
+done
+
+# 额外等待SQL文件执行完成
+echo "等待SQL初始化脚本执行完成..."
 sleep 5
 
 # 检查容器状态

@@ -16,6 +16,10 @@ SET character_set_client = utf8mb4;
 SET character_set_connection = utf8mb4;
 SET character_set_results = utf8mb4;
 
+-- 创建数据库（如果不存在）
+CREATE DATABASE IF NOT EXISTS `sys_carbon` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 使用数据库
 USE `sys_carbon`;
 
 -- 1. 用户表 (user)
@@ -153,7 +157,30 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
     KEY `idx_permission_id` (`permission_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色权限关联表';
 
--- 10. 初始化默认角色
+-- 10. 日志审计表 (audit_log)
+CREATE TABLE IF NOT EXISTS `audit_log` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` BIGINT DEFAULT NULL COMMENT '用户ID',
+    `username` VARCHAR(100) DEFAULT NULL COMMENT '用户名',
+    `ip` VARCHAR(50) DEFAULT NULL COMMENT '请求IP',
+    `url` VARCHAR(500) DEFAULT NULL COMMENT '请求URL',
+    `method` VARCHAR(10) DEFAULT NULL COMMENT '请求方法（GET/POST等）',
+    `params` TEXT DEFAULT NULL COMMENT '请求参数',
+    `status_code` INT DEFAULT NULL COMMENT '响应状态码',
+    `response_time` BIGINT DEFAULT NULL COMMENT '响应时间（毫秒）',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_username` (`username`),
+    KEY `idx_create_time` (`create_time`),
+    KEY `idx_url` (`url`(255)),
+    -- 联合索引优化：用于时间范围+用户ID查询（防止深分页问题）
+    KEY `idx_create_time_user_id` (`create_time`, `user_id`),
+    -- 联合索引优化：用于时间范围+用户名查询
+    KEY `idx_create_time_username` (`create_time`, `username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日志审计表';
+
+-- 11. 初始化默认角色
 INSERT INTO `role` (`role_code`, `role_name`, `description`, `status`, `order`) VALUES
 ('SUPER_ADMIN', '超级管理员', '拥有所有权限，可管理所有用户、角色、权限', 1, 0),
 ('ADMIN', '管理员', '可管理数据录入、查看报表，可管理普通用户', 1, 1),
@@ -161,7 +188,7 @@ INSERT INTO `role` (`role_code`, `role_name`, `description`, `status`, `order`) 
 ('GUEST', '游客', '未登录用户，只能进行查询操作', 1, 3)
 ON DUPLICATE KEY UPDATE `role_name`=VALUES(`role_name`), `order`=VALUES(`order`);
 
--- 11. 初始化默认权限（菜单权限）
+-- 12. 初始化默认权限（菜单权限）
 -- 注意：由于MySQL的限制，parent_id使用临时值，后续通过UPDATE语句修复
 -- 第一步：插入所有权限（parent_id使用临时值）
 INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type`, `parent_id`, `path`, `component`, `icon`, `sort_order`, `description`, `status`) VALUES
@@ -205,6 +232,7 @@ INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type
 ('USER_MANAGE', '用户管理', 'menu', 999, '/Tan/ManageUser', 'ManageUser', 'el-icon-user', 1, '用户管理', 1),
 ('ROLE_MANAGE', '角色管理', 'menu', 999, '/Tan/ManageRole', 'ManageRole', 'el-icon-s-custom', 2, '角色管理', 1),
 ('PERMISSION_MANAGE', '权限管理', 'menu', 999, '/Tan/ManagePermission', 'ManagePermission', 'el-icon-key', 3, '权限管理', 1),
+('AUDIT_LOG', '日志审计', 'menu', 999, '/Tan/ManageAuditLog', 'ManageAuditLog', 'el-icon-document', 4, '日志审计', 1),
 
 -- 用户管理相关的细粒度权限
 ('USER_MANAGE_ADD', '新增用户', 'api', 999, NULL, NULL, NULL, 1, '新增用户权限', 1),
@@ -225,7 +253,11 @@ INSERT INTO `permission` (`permission_code`, `permission_name`, `permission_type
 ('PERMISSION_MANAGE_ADD', '新增权限', 'api', 999, NULL, NULL, NULL, 12, '新增权限', 1),
 ('PERMISSION_MANAGE_UPDATE', '更新权限', 'api', 999, NULL, NULL, NULL, 13, '更新权限', 1),
 ('PERMISSION_MANAGE_DELETE', '删除权限', 'api', 999, NULL, NULL, NULL, 14, '删除权限', 1),
-('PERMISSION_MANAGE_QUERY', '查询权限', 'api', 999, NULL, NULL, NULL, 15, '查询权限', 1)
+('PERMISSION_MANAGE_QUERY', '查询权限', 'api', 999, NULL, NULL, NULL, 15, '查询权限', 1),
+('AUDIT_LOG_ADD', '新增日志', 'api', 999, NULL, NULL, NULL, 16, '新增日志权限', 1),
+('AUDIT_LOG_UPDATE', '更新日志', 'api', 999, NULL, NULL, NULL, 17, '更新日志权限', 1),
+('AUDIT_LOG_DELETE', '删除日志', 'api', 999, NULL, NULL, NULL, 18, '删除日志权限', 1),
+('AUDIT_LOG_QUERY', '查询日志', 'api', 999, NULL, NULL, NULL, 19, '查询日志权限', 1)
 ON DUPLICATE KEY UPDATE `permission_name`=VALUES(`permission_name`);
 
 -- 第二步：修复parent_id关系
@@ -251,7 +283,7 @@ UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission
 UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'CARBON_ANALYSIS') AS tmp) WHERE permission_code IN ('CARBON_RESULT', 'CARBON_ANALYSE') AND parent_id = 999;
 
 -- 修复系统管理模块的子权限
-UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SYSTEM_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE', 'ROLE_MANAGE', 'PERMISSION_MANAGE') AND parent_id = 999;
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'SYSTEM_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE', 'ROLE_MANAGE', 'PERMISSION_MANAGE', 'AUDIT_LOG') AND parent_id = 999;
 
 -- 修复用户管理相关的细粒度权限
 UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'USER_MANAGE') AS tmp) WHERE permission_code IN ('USER_MANAGE_ADD', 'USER_MANAGE_UPDATE', 'USER_MANAGE_DELETE', 'USER_MANAGE_QUERY', 'USER_MANAGE_RESET_PASSWORD', 'USER_MANAGE_ASSIGN_ROLE') AND parent_id = 999;
@@ -261,6 +293,9 @@ UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission
 
 -- 修复权限管理相关的细粒度权限
 UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'PERMISSION_MANAGE') AS tmp) WHERE permission_code IN ('PERMISSION_MANAGE_ADD', 'PERMISSION_MANAGE_UPDATE', 'PERMISSION_MANAGE_DELETE', 'PERMISSION_MANAGE_QUERY') AND parent_id = 999;
+
+-- 修复日志审计相关的细粒度权限
+UPDATE `permission` SET `parent_id` = (SELECT id FROM (SELECT id FROM permission WHERE permission_code = 'AUDIT_LOG') AS tmp) WHERE permission_code IN ('AUDIT_LOG_ADD', 'AUDIT_LOG_UPDATE', 'AUDIT_LOG_DELETE', 'AUDIT_LOG_QUERY') AND parent_id = 999;
 
 -- 12. 为超级管理员分配所有权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`)
@@ -289,7 +324,9 @@ WHERE r.role_code = 'ADMIN'
     -- 报告生成
     'REPORT_GENERATE',
     -- 用户管理（查询权限）
-    'USER_MANAGE', 'USER_MANAGE_QUERY'
+    'USER_MANAGE', 'USER_MANAGE_QUERY',
+    -- 日志审计（查询权限）
+    'AUDIT_LOG', 'AUDIT_LOG_QUERY'
   )
 ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
@@ -305,11 +342,13 @@ WHERE r.role_code = 'USER'
     -- 能耗监测模块（只能查看）
     'ENERGY_MONITOR', 'ENERGY_MONITOR_DETAIL',
     -- 碳排放计算与减碳分析模块（只能查看）
-    'CARBON_ANALYSIS', 'CARBON_RESULT', 'CARBON_ANALYSE'
+    'CARBON_ANALYSIS', 'CARBON_RESULT', 'CARBON_ANALYSE',
+    -- 日志审计（只能查看）
+    'AUDIT_LOG', 'AUDIT_LOG_QUERY'
   )
 ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
--- 15. 为游客角色分配所有查询权限（所有以QUERY结尾的权限和菜单权限）
+-- 15. 为游客角色分配所有查询权限（所有以QUERY结尾的权限和菜单权限，但排除日志审计）
 INSERT INTO `role_permission` (`role_id`, `permission_id`)
 SELECT r.id, p.id
 FROM `role` r
@@ -317,10 +356,10 @@ CROSS JOIN `permission` p
 WHERE r.role_code = 'GUEST'
   AND p.status = 1
   AND (
-    -- 所有查询权限（以QUERY结尾）
-    p.permission_code LIKE '%_QUERY'
-    -- 或者所有菜单权限（用于访问页面）
-    OR p.permission_type = 'menu'
+    -- 所有查询权限（以QUERY结尾），但排除日志审计查询权限
+    (p.permission_code LIKE '%_QUERY' AND p.permission_code NOT LIKE 'AUDIT_LOG%')
+    -- 或者所有菜单权限（用于访问页面），但排除日志审计菜单
+    OR (p.permission_type = 'menu' AND p.permission_code != 'AUDIT_LOG')
   )
 ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
@@ -339,14 +378,14 @@ ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 -- 2. 角色配置：
 --    - SUPER_ADMIN（超级管理员，order=0）：拥有所有权限
 --    - ADMIN（管理员，order=1）：拥有数据输入、查看、用户管理查询权限
---    - USER（普通用户，order=2）：拥有数据查看和添加碳排放记录权限
---    - GUEST（游客，order=3）：拥有所有查询权限和菜单访问权限
+--    - USER（普通用户，order=2）：拥有数据查看和添加碳排放记录权限、日志审计查询权限
+--    - GUEST（游客，order=3）：拥有所有查询权限和菜单访问权限（但排除日志审计）
 --
 -- 3. 角色权限分配：
 --    - 超级管理员：所有权限
---    - 管理员：数据输入（全部）、能耗监测（查看）、碳排放分析（查看）、报告生成、用户管理（查询）
---    - 普通用户：数据输入（查看和添加碳排放记录）、能耗监测（查看）、碳排放分析（查看）
---    - 游客：所有查询权限和菜单权限
+--    - 管理员：数据输入（全部）、能耗监测（查看）、碳排放分析（查看）、报告生成、用户管理（查询）、日志审计（查询）
+--    - 普通用户：数据输入（查看和添加碳排放记录）、能耗监测（查看）、碳排放分析（查看）、日志审计（查询）
+--    - 游客：所有查询权限和菜单权限（但排除日志审计相关权限）
 -- ============================================
 
 -- ============================================

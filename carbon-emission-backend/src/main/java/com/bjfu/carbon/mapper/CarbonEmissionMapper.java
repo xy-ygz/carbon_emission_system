@@ -14,8 +14,23 @@ import java.util.List;
 public interface CarbonEmissionMapper extends BaseMapper<CarbonEmission> {
     List<CarbonEmission> pageByObjectName(@Param("begin")int begin, @Param("pageSize")int pageSize, @Param("name")String name, @Param("year")String year, @Param("month")String month);
 
+    /**
+     * 优化的分页查询：使用子查询先获取ID，避免全表排序
+     * 
+     * @param name 名称（可选，LIKE查询）
+     * @param year 年份（可选）
+     * @param month 月份（可选）
+     * @param offset 偏移量
+     * @param size 每页大小
+     * @return 碳排放记录列表
+     */
+    List<CarbonEmission> selectPageOptimized(@Param("name") String name,
+                                             @Param("year") String year,
+                                             @Param("month") String month,
+                                             @Param("offset") long offset,
+                                             @Param("size") long size);
 
-    int selectTotalCount(@Param("name")String name, @Param("year")String year, @Param("month")String month);
+    Integer selectTotalCount(@Param("name")String name, @Param("year")String year, @Param("month")String month);
     List<EmissionAndConsume> selectEmiAndConsume(int year);
     List<CarbonEmission> selectEmissionType(int year);
     

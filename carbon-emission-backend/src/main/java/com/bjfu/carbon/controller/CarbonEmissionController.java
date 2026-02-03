@@ -39,6 +39,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -220,12 +221,29 @@ public class CarbonEmissionController {
 
     /**
      * 条件分页查询碳排放记录
+     * @param current 当前页码
+     * @param size 每页大小
+     * @param name 名称（可为空，模糊查询）
+     * @param year 年份（可为空，为空时使用实际年份）
+     * @param month 月份（可为空，为空时查询整年数据）
      */
     @RateLimit(ipLimit = 5, apiLimit = 100)
     @GetMapping("/getAllCarbonEmission")
     @PreAuthorize("hasAuthority('CARBON_RECORD_QUERY')")
-    public IPage<CarbonEmission> getAllCarbonEmission(int current, int size, String name, String year, String month){
-        return carbonEmissionService.pageByObjectName(current, size, name, year, month);
+    public Object getAllCarbonEmission(int current, int size, String name, Integer year, Integer month){
+        int actualYear = year != null ? year : CarbonUtils.getInstance().getActualYear();
+        IPage<CarbonEmission> page = carbonEmissionService.pageByObjectName(current, size, name, actualYear, month);
+        
+        // 包装返回结果，包含分页数据和实际使用的年份
+        Map<String, Object> result = new HashMap<>();
+        result.put("records", page.getRecords());
+        result.put("total", page.getTotal());
+        result.put("size", page.getSize());
+        result.put("current", page.getCurrent());
+        result.put("pages", page.getPages());
+        result.put("actualYear", actualYear);
+        
+        return ResultUtils.success(result);
     }
 
     /**
@@ -580,8 +598,7 @@ public class CarbonEmissionController {
         if (buildings == null || buildings.trim().isEmpty()) {
             return null;
         }
-        return Arrays.asList(buildings.split(","))
-                .stream()
+        return Arrays.stream(buildings.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());

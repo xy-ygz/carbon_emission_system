@@ -339,6 +339,14 @@ export default {
               className: 'el-icon-key',
               style: 'font-size: 16px;',
               onClick: null
+            },
+            {
+              index: '/Tan/ManageAuditLog',
+              text: '日志审计',
+              icon: '',
+              className: 'el-icon-document',
+              style: 'font-size: 16px;',
+              onClick: null
             }
           ]
         }

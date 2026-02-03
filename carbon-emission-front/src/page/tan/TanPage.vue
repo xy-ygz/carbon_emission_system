@@ -10,8 +10,8 @@
           <div class="forest-card-body">
             <div class="leftl">
               <el-descriptions class="xiaoyuangai" title=""
-                :column="descriptionColumn" size="medium" border 
-                :contentStyle="{color: '#1a3d0d', fontSize: 'var(--forest-main-font-size)'}" 
+                :column="descriptionColumn" size="medium" border
+                :contentStyle="{color: '#1a3d0d', fontSize: 'var(--forest-main-font-size)'}"
                 :labelStyle="{color: '#4a7c3a', fontWeight: 600, fontSize: 'var(--forest-main-font-size)'}">
                 <el-descriptions-item>
                   <template slot="label">
@@ -208,10 +208,10 @@ export default {
     this.getPie()
     this.getCarbonBar()
     this.getCarbonData()
-    
+
     // 添加窗口 resize 监听（响应式布局）
     window.addEventListener('resize', this.handleResize);
-    
+
     // 页面加载完成后额外触发一次 resize，确保 flex 布局计算完成后图表能铺满
     this.$nextTick(() => {
       this.handleResize();
@@ -254,7 +254,7 @@ export default {
       if (this.resizeTimer) {
         clearTimeout(this.resizeTimer);
       }
-      
+
       // 防抖：延迟执行，避免频繁触发
       this.resizeTimer = setTimeout(() => {
         if (this.myChart4) {
@@ -339,19 +339,19 @@ export default {
           }
           this.xxValue = xValueTemp;
           this.yyValue = yValueTemp;
-          
+
           this.$nextTick(() => {
             // 获取 DOM 元素
             const chartDom = document.getElementById('homeSpeciesBarChart');
             if (!chartDom) {
               return;
             }
-            
+
             // 核心修复：确保 DOM 已经有宽高，否则延迟初始化
             // 增加重试机制，确保在小屏幕时也能正确初始化
             let retryCount = 0;
             const maxRetries = 5;
-            
+
             const tryInit = () => {
               if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
                 if (retryCount < maxRetries) {
@@ -365,7 +365,7 @@ export default {
                 this.initSpeciesBarChart(chartDom);
               }
             };
-            
+
             tryInit();
           });
         }
@@ -377,16 +377,16 @@ export default {
     // 将初始化逻辑抽离，支持重试
     initSpeciesBarChart(chartDom) {
       if (!chartDom) return;
-      
+
       // 先检查是否已有图表实例，如果有则先销毁
       if (this.myChart4) {
         this.myChart4.dispose();
       }
-      
+
       // 响应式配置：根据容器宽度动态调整图表布局
       const containerWidth = chartDom.clientWidth || chartDom.offsetWidth || 600;
       let gridConfig, xAxisLabelConfig, legendConfig;
-      
+
       if (containerWidth < 600) {
         // 小屏幕：调整grid和xAxis标签
         gridConfig = {
@@ -426,7 +426,7 @@ export default {
           data: ['CO₂排放量']
         };
       }
-      
+
       // 初始化echarts实例
       this.myChart4 = this.$echarts.init(chartDom);
       this.myChart4.setOption({
@@ -474,7 +474,7 @@ export default {
           }
         }]
       })
-      
+
       // 移除旧的监听并添加新的 resize 监听
       window.removeEventListener('resize', this.handleResize);
       window.addEventListener('resize', this.handleResize);
@@ -513,7 +513,7 @@ export default {
 }
 
 .leftl {
-  flex: 0 0 45%; /*学校描述占40%*/ 
+  flex: 0 0 45%; /*学校描述占40%*/
   min-width: 0;
   overflow: hidden; /* 核心：防止描述内容溢出导致宽高失控 */
   display: flex;
@@ -535,7 +535,6 @@ export default {
 /* 核心优化：强制 el-descriptions 内部组件完全填满或按比例缩放 */
 .index-main-box-carbon .xiaoyuangai .el-descriptions__body {
   width: 91%; /* 与底部表格保持一致 */
-  height: 93%; /* 与底部表格保持一致 */
   background: transparent;
   display: flex;
 }
@@ -559,7 +558,7 @@ export default {
 }
 
 .xiaoyuantu {
-  flex: 0 0 55%;  /*图占60%*/ 
+  flex: 0 0 55%;  /*图占60%*/
   min-width: 0;
   display: flex;
   align-items: stretch;
@@ -651,21 +650,21 @@ export default {
     gap: 10px;
     min-height: 350px; /* 平板端最小高度 */
   }
-  
+
   .indexbottom {
     width: 95%;
     gap: 10px;
     min-height: 250px; /* 平板端最小高度 */
   }
-  
+
   .carbonon {
     min-width: 0; /* 允许收缩 */
   }
-  
+
   .carbonup {
     min-width: 0; /* 允许收缩 */
   }
-  
+
   .forest-card-header {
     font-size: 18px;
     padding: 8px 15px;
@@ -683,7 +682,7 @@ export default {
     padding: 10px;
     margin: 0;
   }
-  
+
   .indexbottom {
     flex-direction: column; /* 改为纵向堆叠 */
     width: 100%;
@@ -693,68 +692,68 @@ export default {
     padding: 0 10px;
     margin-top: 15px;
   }
-  
+
   .left {
     flex: 1 1 100%; /* 移动端占满宽度 */
     min-width: 0;
   }
-  
+
   .carbonright {
     flex: 1 1 100%; /* 移动端占满宽度 */
     min-width: 0;
     min-height: 300px; /* 确保图表有足够高度 */
   }
-  
+
   .carbonon {
     flex: 1 1 100%; /* 移动端占满宽度 */
     min-width: 0;
   }
-  
+
   .carbonup {
     flex: 1 1 100%; /* 移动端占满宽度 */
     min-width: 0;
     min-height: 400px; /* 移动端确保图表有足够高度 */
   }
-  
+
   .carbonup-chart-wrap {
     min-height: 350px; /* 移动端图表容器最小高度 */
   }
-  
+
   #homeSpeciesBarChart {
     min-height: 350px; /* 移动端图表最小高度 */
   }
-  
+
   /* 学校概况卡片内部布局调整 */
   .forest-card-body {
     flex-direction: column; /* 移动端纵向排列 */
   }
-  
+
   .leftl {
     flex: 0 0 auto; /* 移动端不固定比例 */
     min-height: auto;
   }
-  
+
   .xiaoyuantu {
     flex: 0 0 auto; /* 移动端不固定比例 */
     min-height: 200px;
   }
-  
+
   .forest-card-header {
     font-size: 16px;
     padding: 8px 12px;
   }
-  
+
   /* Element UI 描述列表响应式 */
   .index-main-box-carbon .xiaoyuangai {
     padding: 10px;
   }
-  
+
   /* 表格响应式：小屏幕横向滚动 */
   .index-main-box-carbon .forest-card-body-table {
     overflow-x: auto;
     overflow-y: auto;
   }
-  
+
   .index-main-box-carbon .forest-card-body-table .table_two {
     min-width: 500px; /* 确保表格最小宽度，触发横向滚动 */
   }
@@ -766,37 +765,37 @@ export default {
     padding: 5px;
     gap: 10px;
   }
-  
+
   .indexbottom {
     padding: 0 5px;
     gap: 10px;
   }
-  
+
   .forest-card-header {
     font-size: 14px;
     padding: 6px 10px;
   }
-  
+
   .index-main-box-carbon {
     --forest-main-font-size: 0.9rem; /* 小屏幕字体稍小 */
   }
-  
+
   .xiaoyuantu {
     min-height: 150px;
   }
-  
+
   .carbonright {
     min-height: 250px;
   }
-  
+
   .carbonup {
     min-height: 400px; /* 小屏幕确保有足够高度 */
   }
-  
+
   .carbonup-chart-wrap {
     min-height: 350px; /* 小屏幕图表容器最小高度 */
   }
-  
+
   #homeSpeciesBarChart {
     min-height: 350px; /* 小屏幕图表最小高度 */
   }
@@ -870,7 +869,7 @@ export default {
   flex: 0 1 40%;
   min-width: 0;
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
 }
 
 /* flex: 1 占满 .carbonright 除 header 外的剩余高度；min-height: 0 重置 flex 元素的最小高度限制，允许高度压缩，默认 min-height: auto：flex 元素的最小高度不能小于其内容的高度； */

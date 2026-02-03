@@ -101,19 +101,51 @@
         limit #{begin} , #{pageSize}
     </select>
     
+    <!-- 优化的分页查询：使用子查询先获取ID，避免全表排序 -->
+    <select id="selectPageOptimized" resultMap="BaseResultMap">
+        SELECT 
+            ce.id, ce.name, ce.category, ce.consumption, ce.purpose,
+            ce.year, ce.month, ce.amount, ce.place, ce.emission_type,
+            ce.created_time, ce.modified_time
+        FROM carbon_emission ce
+        INNER JOIN (
+            SELECT id
+            FROM carbon_emission
+            <where>
+                <!-- 优先使用可命中索引的条件（year/month），让 MySQL 优化器先过滤 -->
+                <if test="year != null and year != ''">
+                    AND year = #{year}
+                </if>
+                <if test="month != null and month != ''">
+                    AND month = #{month}
+                </if>
+                <!-- name 的 LIKE '%xxx%' 无法命中索引，放在后面作为后置过滤 -->
+                <!-- 如果 year/month 有值，MySQL 会先通过索引过滤，再对结果进行 name LIKE 过滤 -->
+                <!-- 如果只有 name 条件，会全表扫描，但至少排序可以利用 year DESC, month DESC 的索引扫描 -->
+                <if test="name != null and name != ''">
+                    <bind name="namePattern" value="'%' + name + '%'"/>
+                    AND name LIKE #{namePattern}
+                </if>
+            </where>
+            ORDER BY year DESC, month DESC, id DESC
+            LIMIT #{offset}, #{size}
+        ) AS ids ON ce.id = ids.id
+        ORDER BY ce.year DESC, ce.month DESC, ce.id DESC
+    </select>
+    
     <select id="selectTotalCount" resultType="java.lang.Integer">
         select count(*)
         from carbon_emission as ce
         <where>
-            <if test="name != null and name != '' ">
-                <bind name="namePattern" value="'%' + name + '%'"/>
-                and ce.name like #{namePattern}
-            </if>
             <if test="year != null and year != '' ">
                 and ce.year = #{year}
             </if>
             <if test="month != null and month != '' ">
                 and ce.month = #{month}
+            </if>
+            <if test="name != null and name != '' ">
+                <bind name="namePattern" value="'%' + name + '%'"/>
+                and ce.name like #{namePattern}
             </if>
         </where>
     </select>

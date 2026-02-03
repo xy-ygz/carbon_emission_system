@@ -15,6 +15,7 @@ import ManageSchool from "../page/admin/ManageSchool";
 import ManageUser from "../page/admin/ManageUser";
 import ManageRole from "../page/admin/ManageRole";
 import ManagePermission from "../page/admin/ManagePermission";
+import ManageAuditLog from "../page/admin/ManageAuditLog";
 import TanResult from "../page/tan/TanResult";
 import TanAnalyse from "../page/tan/TanAnalyse";
 import TanExport from "../page/tan/TanExport";
@@ -154,6 +155,15 @@ const router = new Router({
           path: "ManagePermission",
           name: "ManagePermission",
           component: ManagePermission,
+          meta: {
+            authRequired: true,
+            requireRole: "admin"
+          }
+        },
+        {
+          path: "ManageAuditLog",
+          name: "ManageAuditLog",
+          component: ManageAuditLog,
           meta: {
             authRequired: true,
             requireRole: "admin"
