@@ -1,6 +1,43 @@
 name: carbon_emission_system
 
 services:
+  # 智能问答微服务（Python）
+  ai-qa:
+    build:
+      context: ../ai-qa-service
+      dockerfile_inline: |
+        FROM python:3.11-slim
+        WORKDIR /app
+        COPY requirements.txt .
+        RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+        COPY . .
+        EXPOSE 8000
+        CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    image: carbon-ai-qa:latest
+    container_name: carbon-ai-qa
+    restart: always
+    ports:
+      - "8000:8000"
+    networks:
+      - carbon-network
+    depends_on:
+      - backend
+    environment:
+      TZ: Asia/Shanghai
+      BACKEND_BASE_URL: http://carbon-backend:8080/api
+      # 大模型与向量检索配置直接写在本文件
+      LLM_ENABLED: "true"
+      LLM_BASE_URL: https://open.bigmodel.cn/api/paas/v4/chat/completions
+      # 部署时请填写智谱开放平台 API Key
+      LLM_API_KEY: ""
+      LLM_MODEL: glm-4.5-air
+      LLM_MAX_TOKENS: "2048"
+      EMBEDDING_ENABLED: "true"
+      EMBEDDING_BASE_URL: https://open.bigmodel.cn/api/paas/v4/embeddings
+      EMBEDDING_MODEL: embedding-2
+      VECTOR_TOP_K: "5"
+      VECTOR_CACHE_TTL: "300"
+
   # 前端服务
   frontend:
     image: nginx:1.20-alpine
@@ -12,6 +49,7 @@ services:
       - carbon-network
     depends_on:
       - backend
+      - ai-qa
     volumes:
       - ./frontend/default.conf:/etc/nginx/conf.d/default.conf
       - ./frontend/dist:/usr/share/nginx/html

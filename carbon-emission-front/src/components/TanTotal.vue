@@ -306,6 +306,16 @@ export default {
           ref: 'menuItem4',
           isSubmenu: false
         },
+        // 智能问答（一级菜单）
+        {
+          index: '/Tan/TanQA',
+          text: '智能问答',
+          icon: '',
+          className: 'header-icon el-icon-chat-dot-round menu-item-original',
+          style: 'font-size: 20px;',
+          ref: 'menuItem5',
+          isSubmenu: false
+        },
         // 系统管理
         {
           index: '4',
@@ -313,7 +323,7 @@ export default {
           icon: 'header-icon el-icon-setting',
           className: 'menu-item-original',
           style: 'font-size: 20px;',
-          ref: 'menuItem5',
+          ref: 'menuItem6',
           isSubmenu: true,
           subItems: [
             {

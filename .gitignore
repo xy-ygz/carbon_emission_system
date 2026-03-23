@@ -14,15 +14,27 @@ Thumbs.db
 *.log
 logs/
 
-# Build outputs
-carbon-emission-backend/target/
-carbon-emission-front/dist/
+# ---------- 前端：勿提交依赖与构建产物 ----------
 carbon-emission-front/node_modules/
+carbon-emission-front/dist/
 carbon-emission-front/.cache/
+carbon-emission-front/yarn.lock
 
-# Docker
+# ---------- 后端：勿提交 IDE 与构建 ----------
+carbon-emission-backend/.idea/
+carbon-emission-backend/.vscode/
+carbon-emission-backend/target/
+
+# Python（ai-qa-service）
+**/__pycache__/
+*.py[cod]
+*.pyo
+
+# Docker 运行时产物 / 密钥
 docker/backend/*.war
 docker/frontend/dist/
+docker/.env
+docker/.env.example
 
 # Temporary files
 *.tmp

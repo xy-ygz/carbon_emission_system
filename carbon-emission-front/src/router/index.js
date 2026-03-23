@@ -19,6 +19,7 @@ import ManageAuditLog from "../page/admin/ManageAuditLog";
 import TanResult from "../page/tan/TanResult";
 import TanAnalyse from "../page/tan/TanAnalyse";
 import TanExport from "../page/tan/TanExport";
+import TanQA from "../page/tan/TanQA";
 import { Message } from "element-ui";
 Vue.prototype.$message = Message;
 Vue.use(Router);
@@ -129,6 +130,14 @@ const router = new Router({
           path: "TanExport",
           name: "TanExport",
           component: TanExport,
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: "TanQA",
+          name: "TanQA",
+          component: TanQA,
           meta: {
             authRequired: true
           }
