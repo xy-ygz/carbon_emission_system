@@ -190,7 +190,7 @@ def _clean_params(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _public_api_base_for_links() -> str:
-    """拼给前端/用户点击的 API 基址，补全 https://（compose 里常写成 host/path 无协议）。"""
+    """拼给前端/用户点击的 API 基址"""
     raw = (getattr(settings, "PUBLIC_BACKEND_BASE_URL", None) or "").strip()
     if not raw:
         raw = (settings.BACKEND_BASE_URL or "").strip()
@@ -198,7 +198,7 @@ def _public_api_base_for_links() -> str:
     if not raw:
         return ""
     if not (raw.startswith("http://") or raw.startswith("https://")):
-        raw = "https://" + raw.lstrip("/")
+        raw = "http://" + raw.lstrip("/")
     return raw
 
 
