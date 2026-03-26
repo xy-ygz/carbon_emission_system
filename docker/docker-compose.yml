@@ -25,6 +25,8 @@ services:
     environment:
       TZ: Asia/Shanghai
       BACKEND_BASE_URL: http://carbon-backend:8080/api
+      # 回答中对外展示的下载/接口地址（给浏览器/前端使用）
+      PUBLIC_BACKEND_BASE_URL: bjfucarbon.com/api
       # 大模型与向量检索配置直接写在本文件
       LLM_ENABLED: "true"
       LLM_BASE_URL: https://open.bigmodel.cn/api/paas/v4/chat/completions
@@ -35,7 +37,7 @@ services:
       EMBEDDING_ENABLED: "true"
       EMBEDDING_BASE_URL: https://open.bigmodel.cn/api/paas/v4/embeddings
       EMBEDDING_MODEL: embedding-2
-      VECTOR_TOP_K: "5"
+      VECTOR_TOP_K: "3"
       VECTOR_CACHE_TTL: "300"
 
   # 前端服务

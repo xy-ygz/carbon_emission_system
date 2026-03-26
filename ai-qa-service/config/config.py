@@ -3,6 +3,8 @@ import os
 
 class Settings:
     BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://carbon-backend:8080/api")
+    # 对外展示给用户的 API 基址（用于回答里拼“下载链接/接口地址”），与服务间调用解耦
+    PUBLIC_BACKEND_BASE_URL = os.getenv("PUBLIC_BACKEND_BASE_URL", BACKEND_BASE_URL)
     LLM_ENABLED = os.getenv("LLM_ENABLED", "true").lower() == "true"
     LLM_BASE_URL = os.getenv(
         "LLM_BASE_URL",
@@ -18,7 +20,7 @@ class Settings:
         "https://open.bigmodel.cn/api/paas/v4/embeddings",
     )
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "embedding-2")
-    VECTOR_TOP_K = int(os.getenv("VECTOR_TOP_K", "5"))
+    VECTOR_TOP_K = int(os.getenv("VECTOR_TOP_K", "3"))
     VECTOR_CACHE_TTL = int(os.getenv("VECTOR_CACHE_TTL", "300"))
 
 

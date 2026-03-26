@@ -13,7 +13,6 @@ from urllib.parse import urlparse, urlunparse
 
 import httpx
 import numpy as np
-from langchain_openai import OpenAIEmbeddings
 
 from config.config import settings
 
@@ -63,16 +62,17 @@ def _normalize_base_url(url: str, endpoint_suffix: str) -> str:
     return clean_url
 
 
-def _build_embeddings_model() -> Optional[OpenAIEmbeddings]:
-    """构造用于向量化的 embeddings client。"""
+def _embedding_endpoint() -> Optional[str]:
+    """构造 embedding 请求 URL。"""
     if not settings.LLM_API_KEY:
         return None
-    base_url = _normalize_base_url(settings.EMBEDDING_BASE_URL, "/embeddings")
-    return OpenAIEmbeddings(
-        model=settings.EMBEDDING_MODEL,
-        api_key=settings.LLM_API_KEY,
-        base_url=base_url,
-    )
+    raw_url = (settings.EMBEDDING_BASE_URL or "").strip()
+    if not raw_url:
+        return None
+    if raw_url.endswith("/embeddings"):
+        return raw_url
+    base_url = _normalize_base_url(raw_url, "/embeddings").rstrip("/")
+    return f"{base_url}/embeddings"
 
 
 def _parse_year_range(text: str) -> Optional[Tuple[int, int]]:
@@ -147,6 +147,17 @@ def _detect_area_flag(text: str) -> bool:
     return any(key in text for key in ["地均", "单位面积", "每平方米", "m2"])
 
 
+def _detect_annual_report_download_intent(text: str) -> bool:
+    """识别“年度报告导出/下载（PDF/Word）”意图，用于强制注入导出接口。"""
+    if not text:
+        return False
+    t = str(text).lower()
+    has_report = ("年度报告" in t) or ("年报" in t) or ("年度" in t and "报告" in t)
+    has_download = ("下载" in t) or ("导出" in t) or ("导出报告" in t) or ("下载链接" in t) or ("链接" in t)
+    wants_file = ("pdf" in t) or ("word" in t) or ("docx" in t) or ("文件" in t) or ("报告" in t and ("下载" in t or "导出" in t))
+    return has_report and (has_download or wants_file)
+
+
 def _clean_params(params: Dict[str, Any]) -> Dict[str, Any]:
     """去掉 None / 空字符串入参，避免后端解析异常。"""
     return {k: v for k, v in params.items() if v is not None and v != ""}
@@ -186,6 +197,10 @@ def _format_endpoint_chunk(endpoint_title: str, data: Any, endpoint_kind: str) -
     """把后端 data 格式化成适合 LLM 的上下文片段。"""
     if data is None:
         return None
+
+    # 文件下载/说明类接口：不依赖后端 data，直接输出调用方式提示
+    if endpoint_kind in {"exportReportDownload", "downloadTemplate", "exportTaskDownloadFile"}:
+        return str(data) if isinstance(data, str) and data else None
 
     # emissionCategory 返回结构是：
     # [
@@ -318,15 +333,63 @@ def _endpoint_catalog() -> List[Dict[str, str]]:
             "kind": "listBuildingInfo",
             "keywords": "每年的不同楼宇电耗 建筑面积 碳排放量 单位面积排放量 年份 月份 地均/总 楼宇名称",
         },
+        {
+            "id": "getAllCarbonEmission",
+            "title": "【碳排放记录分页查询】",
+            "path": "/carbonEmission/getAllCarbonEmission",
+            "kind": "getAllCarbonEmission",
+            "keywords": "分页查询 碳排放记录 current size 页码 每页大小 名称模糊查询 name 年份 year 月份 month 记录列表 total",
+        },
+        {
+            "id": "exportReportDataByYear",
+            "title": "【年度报告数据】",
+            "path": "/carbonEmission/exportReportDataByYear",
+            "kind": "exportReportDataByYear",
+            "keywords": "年度报告 数据 year 获取年度报告数据 报告内容 概览 统计",
+        },
+        # 说明类/文件下载类接口：纳入目录供检索，但不在 RAG 里直接调用（非 JSON）
+        {
+            "id": "exportReport",
+            "title": "【导出年度报告（文件下载）】",
+            "path": "/carbonEmission/exportReport",
+            "kind": "exportReportDownload",
+            "keywords": "导出 报告 下载 Word PDF docx pdf 年度报告 year format 导出报告文件",
+        },
     ]
 
 
-def embed_texts(texts: List[str], embeddings_model: OpenAIEmbeddings) -> Optional[np.ndarray]:
-    """调用 embedding 模型把文本批量转成向量。"""
+def embed_texts(texts: List[str], embedding_url: str) -> Optional[np.ndarray]:
+    """调用 embedding 接口把文本批量转成向量。"""
     if not texts or not settings.LLM_API_KEY:
         return None
     try:
-        all_embeddings = embeddings_model.embed_documents(texts)
+        payload = {
+            "model": settings.EMBEDDING_MODEL,
+            "input": texts,
+        }
+        headers = {
+            "Authorization": f"Bearer {settings.LLM_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        with httpx.Client(timeout=HTTP_CLIENT_TIMEOUT) as client:
+            resp = client.post(embedding_url, json=payload, headers=headers)
+        if resp.status_code != 200:
+            logger.warning("embedding 接口返回非200: status=%s body=%s", resp.status_code, resp.text[:300])
+            return None
+        body = resp.json()
+        # 兼容 OpenAI 风格返回：{"data":[{"embedding":[...]}]}
+        data = body.get("data", []) if isinstance(body, dict) else []
+        if not isinstance(data, list) or not data:
+            logger.warning("embedding 接口返回格式异常: body=%s", str(body)[:300])
+            return None
+        all_embeddings = []
+        for item in data:
+            if not isinstance(item, dict):
+                return None
+            vec = item.get("embedding")
+            if not isinstance(vec, list) or not vec:
+                return None
+            all_embeddings.append(vec)
     except Exception as e:
         logger.warning("embedding 调用异常: %s", e)
         return None
@@ -342,20 +405,23 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return (a_norm @ b_norm.T).ravel()
 
 
-def _choose_endpoints(question: str, endpoint_catalog: List[Dict[str, str]], embeddings_model: Optional[OpenAIEmbeddings]) -> List[Dict[str, str]]:
-    """根据接口关键词相似度选出最相关的接口（默认 top2）。"""
-    selected = endpoint_catalog[:2]
-    if embeddings_model is None or not settings.LLM_API_KEY:
+def _choose_endpoints(question: str, endpoint_catalog: List[Dict[str, str]], embedding_url: Optional[str]) -> List[Dict[str, str]]:
+    """根据接口关键词相似度选出最相关的接口（默认 topK=VECTOR_TOP_K，默认值见配置）。"""
+    k = settings.VECTOR_TOP_K if isinstance(getattr(settings, "VECTOR_TOP_K", None), int) else 3
+    k = 3 if k <= 0 else k
+    take_n = min(k, len(endpoint_catalog)) if endpoint_catalog else 0
+    selected = endpoint_catalog[:take_n] if take_n > 0 else []
+    if embedding_url is None or not settings.LLM_API_KEY:
         return selected
 
     try:
         keyword_texts = [e["keywords"] for e in endpoint_catalog]
-        keyword_emb = embed_texts(keyword_texts, embeddings_model=embeddings_model)
-        q_emb = embed_texts([question], embeddings_model=embeddings_model)
+        keyword_emb = embed_texts(keyword_texts, embedding_url=embedding_url)
+        q_emb = embed_texts([question], embedding_url=embedding_url)
         if keyword_emb is None or q_emb is None or q_emb.shape[0] != 1:
             return selected
         sims = _cosine_similarity(keyword_emb, q_emb)
-        take_n = min(2, len(endpoint_catalog))
+        take_n = min(max(1, k), len(endpoint_catalog))
         top_indices = np.argsort(sims)[::-1][:take_n]
         selected = [endpoint_catalog[i] for i in top_indices]
     except Exception as e:
@@ -364,7 +430,7 @@ def _choose_endpoints(question: str, endpoint_catalog: List[Dict[str, str]], emb
     return selected
 
 
-def fetch_dynamic_chunks(question: str, embeddings_model: Optional[OpenAIEmbeddings]) -> List[str]:
+def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[str]:
     """动态调用最相关后端接口并把结果拼成候选 chunks。"""
     chunks: List[str] = []
 
@@ -375,12 +441,17 @@ def fetch_dynamic_chunks(question: str, embeddings_model: Optional[OpenAIEmbeddi
     area_flag = _detect_area_flag(question)
 
     endpoint_catalog = _endpoint_catalog()
-    selected = _choose_endpoints(question, endpoint_catalog, embeddings_model=embeddings_model)
+    selected = _choose_endpoints(question, endpoint_catalog, embedding_url=embedding_url)
 
     # 当用户明确提出“月度/月份区间”问题时，强制把 emissionCategory 纳入候选接口
     # （否则只靠接口关键词相似度，可能漏掉唯一的月度分解入口）
     if (month is not None or month_range is not None) and not any(e["id"] == "emissionCategory" for e in selected):
         selected = [*selected, next(e for e in endpoint_catalog if e["id"] == "emissionCategory")]
+
+    # 当用户明确提出“年度报告 + 下载/导出/pdf/word”等意图时，把 exportReport 纳入候选
+    # （避免向量相似度把“报告下载”误判为“年度统计图表”）
+    if _detect_annual_report_download_intent(question) and not any(e["id"] == "exportReport" for e in selected):
+        selected = [*selected, next(e for e in endpoint_catalog if e["id"] == "exportReport")]
 
     logger.info(
         "[RAG] question=%s year_range=%s year=%s month_range=%s month=%s area_flag=%s",
@@ -400,6 +471,33 @@ def fetch_dynamic_chunks(question: str, embeddings_model: Optional[OpenAIEmbeddi
         with httpx.Client(timeout=HTTP_CLIENT_TIMEOUT) as client:
             for endpoint in selected:
                 params: Dict[str, Any] = {}
+
+                # 文件下载/说明类接口：不直接请求后端，避免二进制内容/权限导致 RAG 失败
+                if endpoint["id"] == "exportReport":
+                    actual_year = year if year is not None else "（为空则后端会使用实际年份）"
+                    fmt = "pdf" if "pdf" in (question or "").lower() else "docx"
+                    chunks.append(
+                        "【导出年度报告（文件下载）】\n"
+                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        f"- 参数：year={actual_year}，format={fmt}（docx/pdf）\n"
+                        "- 说明：该接口返回文件流（非JSON），适合浏览器下载。"
+                    )
+                    continue
+                if endpoint["id"] == "downloadCarbonEmissionTemplate":
+                    chunks.append(
+                        "【下载碳排放导入模板（文件下载）】\n"
+                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        "- 说明：该接口返回 .xlsx 文件流（非JSON）。"
+                    )
+                    continue
+                if endpoint["id"] == "exportTaskDownload":
+                    chunks.append(
+                        "【下载导出任务文件（文件下载）】\n"
+                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        "- 参数：taskId=导出任务ID\n"
+                        "- 说明：该接口返回文件流（非JSON），任务需为 COMPLETED。"
+                    )
+                    continue
 
                 if endpoint["id"] in {"collegeCarbonEmission", "mulberryDiagram", "listSpeciesConsumptionCount", "listSpeciesCarbon"}:
                     params["year"] = str(year) if endpoint["id"] == "collegeCarbonEmission" and year is not None else year
@@ -427,6 +525,23 @@ def fetch_dynamic_chunks(question: str, embeddings_model: Optional[OpenAIEmbeddi
                         params["year"] = year
                         params["month"] = month
                     params["area"] = area_flag
+
+                if endpoint["id"] in {"getAllCarbonEmission"}:
+                    params["current"] = 1
+                    params["size"] = 10
+                    params["name"] = None
+                    if year is not None:
+                        params["year"] = year
+                    if month is not None:
+                        params["month"] = month
+
+                if endpoint["id"] in {"exportReportDataByYear"}:
+                    if year is not None:
+                        params["year"] = year
+
+                if endpoint["id"] in {"exportTaskStatus"}:
+                    # 任务ID无法从自然语言可靠解析，这里不给默认值，避免后端必填校验失败
+                    params["taskId"] = None
 
                 params = _clean_params(params)
                 logger.info(
@@ -456,20 +571,20 @@ def fetch_dynamic_chunks(question: str, embeddings_model: Optional[OpenAIEmbeddi
     return chunks
 
 
-def get_relevant_context(question: str, top_k: Optional[int] = None, embeddings_model: Optional[OpenAIEmbeddings] = None) -> str:
+def get_relevant_context(question: str, top_k: Optional[int] = None, embedding_url: Optional[str] = None) -> str:
     """拼装 RAG context：优先依赖接口选择（fetch_dynamic_chunks），不再对 chunks 做额外精排。"""
 
-    # 如果调用方没有传 embeddings_model，则按配置自动创建
-    if embeddings_model is None and settings.EMBEDDING_ENABLED and settings.LLM_API_KEY:
-        embeddings_model = _build_embeddings_model()
+    # 如果调用方没有传 embedding_url，则按配置自动创建
+    if embedding_url is None and settings.EMBEDDING_ENABLED and settings.LLM_API_KEY:
+        embedding_url = _embedding_endpoint()
 
     # 得到与 用户问题 最相关的 topK 系统数据接口，将接口返回数据格式化成 chunks
     # 若 embeddings 仍不可用，则直接返回全部 chunks（保持“轻量兜底”）
-    if embeddings_model is None:
-        chunks = fetch_dynamic_chunks(question=question, embeddings_model=None)
+    if embedding_url is None:
+        chunks = fetch_dynamic_chunks(question=question, embedding_url=None)
         return "\n\n".join(chunks)
 
-    chunks = fetch_dynamic_chunks(question=question, embeddings_model=embeddings_model)
+    chunks = fetch_dynamic_chunks(question=question, embedding_url=embedding_url)
     if not chunks:
         return "当前系统暂无可用的业务数据。"
     # chunks 已来自与问题相关的接口候选；当前数据量很少时，直接拼接即可保证召回覆盖

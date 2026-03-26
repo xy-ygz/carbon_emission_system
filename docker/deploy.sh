@@ -130,7 +130,7 @@ docker-compose down -v 2>/dev/null || true
 
 # 启动容器
 echo "启动容器..."
-docker-compose up -d
+docker-compose up -d --build
 
 # 等待MySQL容器启动并完成初始化
 echo "等待MySQL容器启动并完成数据库初始化..."

@@ -29,6 +29,7 @@
 
       <div class="qa-input-area">
         <el-input
+          ref="qaInput"
           type="textarea"
           v-model="inputText"
           :rows="3"
@@ -68,9 +69,13 @@ export default {
       return DOMPurify.sanitize(html);
     },
     handleInputKeydown(e) {
+      // IME 组合输入（中文/日文等）时回车用于“上屏/选词”，不应触发发送
+      if (e && (e.isComposing === true || e.keyCode === 229)) return;
+
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.handleSend();
+        // 粘贴后立刻回车时，v-model 可能尚未同步，延迟到 nextTick 再发送
+        this.$nextTick(() => this.handleSend());
       }
     },
     scrollToBottom() {
@@ -90,7 +95,20 @@ export default {
     },
     async handleSend() {
       if (this.loading) return;
-      const q = this.inputText && this.inputText.trim();
+      let raw = this.inputText;
+      let q = raw && raw.trim();
+
+      // 兜底：极端情况下（如粘贴后立即回车），v-model 可能尚未更新，直接从 textarea/input 取值
+      if (!q && this.$refs && this.$refs.qaInput) {
+        const comp = this.$refs.qaInput;
+        let el = comp.$refs && (comp.$refs.textarea || comp.$refs.input);
+        if (!el && comp.$el && typeof comp.$el.querySelector === 'function') {
+          el = comp.$el.querySelector('textarea, input');
+        }
+        const domVal = el && typeof el.value === 'string' ? el.value : '';
+        raw = domVal;
+        q = domVal.trim();
+      }
       if (!q) {
         this.$message.warning('请先输入问题');
         return;
