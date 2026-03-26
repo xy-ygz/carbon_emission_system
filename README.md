@@ -2,7 +2,8 @@
 
 一个UI精简、优美且前后端分离的碳排放管理系统，可视化管理碳排放数据。
 <br>读研期间接的学校的系统开发项目，不间断上来练练手。<br>
-系统集成了JWT无状态认证、RBAC角色权限校验、数据可视化、文件流导出、线程池异步处理、缓存限流、AOP自定义切面注解、设计模式等最佳实践。
+系统集成了JWT无状态认证、RBAC角色权限校验、数据可视化、文件流导出、线程池异步处理、缓存限流、AOP自定义切面注解、设计模式等最佳实践。<br>
+近期基于langchain接入了「智能问答」，并根据已有系统数据构建了simple_rag。
 ![tangif2](https://github.com/user-attachments/assets/5deadc68-dd48-4420-bd11-dea2ec9d3454)
 
 
@@ -40,6 +41,15 @@
 | Webpack | 3.6.0 | 构建工具 |
 | Less | 4.1.2 | CSS预处理器 |
 
+### AI 问答微服务（`ai-qa-service`）
+
+| 技术 | 说明 |
+|------|------|
+| Python 3.11 + FastAPI + Uvicorn | HTTP 服务 |
+| LangChain（langchain-core、langchain-openai） | 提示词模板、Runnable 链；`ChatOpenAI` 走智谱 OpenAI 兼容接口 |
+| RAG + 向量检索（可选） | 接口目录与上下文检索，对接主后端 JSON API |
+| 智谱 GLM / Embedding | 对话与向量（环境变量可配置） |
+
 ### 部署技术栈
 
 | 技术 | 版本 | 说明 |
@@ -48,6 +58,18 @@
 | Docker Compose | Latest | 容器编排 |
 | Nginx | 1.20-alpine | Web服务器 |
 | Tomcat | 9.0-jdk8 | 应用服务器 |
+
+**说明**：独立进程，与 Java 后端通过 `BACKEND_BASE_URL` 通信；生产部署需在 `docker/docker-compose.yml`（或环境变量）中配置 **`LLM_API_KEY`**。更细的目录结构、环境变量与接口说明见 [`ai-qa-service/README.md`](ai-qa-service/README.md)。
+
+**对外路径（经前端 Nginx）**：`/api/ai/qa/ask`（同步）、`/api/ai/qa/ask/stream`（流式）、`/api/ai/qa/health`（健康检查）。
+
+**本地运行**：
+
+```bash
+cd ai-qa-service && pip install -r requirements.txt
+export LLM_API_KEY=你的智谱Key
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
 
 ## 📦 一键部署
 ### 快速开始
@@ -74,7 +96,7 @@ chmod +x deploy.sh
 2. **后端打包**：使用Maven打包后端项目，生成WAR包
 3. **前端打包**：使用npm构建前端项目，生成dist目录
 4. **文件复制**：将打包产物复制到docker目录
-5. **容器启动**：使用Docker Compose启动所有服务
+5. **容器启动**：使用 Docker Compose 启动所有服务（含 MySQL、Redis、Java 后端、前端 Nginx、Python AI 问答 等）
 
 
 ## 许可证

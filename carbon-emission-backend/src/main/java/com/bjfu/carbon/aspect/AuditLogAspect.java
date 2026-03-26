@@ -1,6 +1,7 @@
 package com.bjfu.carbon.aspect;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.bjfu.carbon.security.UserDetailsImpl;
 import com.bjfu.carbon.service.AsyncAuditLogService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +37,8 @@ public class AuditLogAspect {
     private final AsyncAuditLogService asyncAuditLogService;
 
     /**
-     * 定义切点：所有Controller类的方法
+     * 定义切点：所有 Controller 类的方法（含 {@code AiQaProxyController} 转发的 /ai/qa/*）。
+     * 注意：若网关/Nginx 将 /api/ai/qa/ 直连 Python 而不进本服务，则此类请求不会被本切面记录。
      */
     @Pointcut("execution(* com.bjfu.carbon.controller..*.*(..))")
     public void controllerPointcut() {
@@ -162,11 +165,12 @@ public class AuditLogAspect {
                 if (args != null && args.length > 0) {
                     for (int i = 0; i < args.length; i++) {
                         Object arg = args[i];
-                        if (arg != null && 
-                            !(arg instanceof HttpServletRequest) && 
+                        if (arg != null &&
+                            !(arg instanceof HttpServletRequest) &&
                             !(arg instanceof HttpServletResponse)) {
-                            // 只记录简单类型和常见对象，避免记录大对象
-                            if (isSimpleType(arg)) {
+                            if (arg instanceof byte[]) {
+                                putByteArrayAuditParam(params, i, (byte[]) arg);
+                            } else if (isSimpleType(arg)) {
                                 params.put("arg" + i, arg.toString());
                             } else {
                                 // 对于复杂对象，只记录类名
@@ -188,6 +192,29 @@ public class AuditLogAspect {
             log.debug("获取请求参数失败", e);
             return null;
         }
+    }
+
+    /**
+     * {@code @RequestBody byte[]}：解码为 UTF-8，若为 JSON 且含 {@code question} 则记问题文案，否则记 body 摘要。
+     */
+    private void putByteArrayAuditParam(Map<String, Object> params, int index, byte[] bytes) {
+        if (bytes.length == 0) {
+            params.put("arg" + index, "");
+            return;
+        }
+        String raw = new String(bytes, StandardCharsets.UTF_8);
+        String trimmed = raw.length() > 1000 ? raw.substring(0, 1000) + "..." : raw;
+        try {
+            JSONObject jo = JSON.parseObject(raw);
+            if (jo != null && jo.containsKey("question")) {
+                String q = jo.getString("question");
+                params.put("question", q != null ? q : "");
+                return;
+            }
+        } catch (Exception e) {
+            log.debug("解析 JSON body 失败，使用原文摘要", e);
+        }
+        params.put("body", trimmed);
     }
 
     /**

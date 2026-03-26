@@ -75,6 +75,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sys_carbon?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 123456
+      # 智能问答代理（AiQaProxyController）转发目标，与 ai-qa 容器名一致
+      AI_QA_BASE_URL: http://carbon-ai-qa:8000
       # 字体文件路径环境变量（容器内路径，用于PDF导出，代码会优先从此路径读取字体文件）
       FONT_DIR: /app/fonts
     volumes:

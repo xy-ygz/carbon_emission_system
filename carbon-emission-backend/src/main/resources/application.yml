@@ -69,6 +69,10 @@ carbon:
   # 年份回退配置，当指定年份没有数据时，最多回退的年份数
   fallback-years: 3
 
+# 智能问答 Python 服务基址（AiQaProxyController 转发；Docker 中一般为 http://carbon-ai-qa:8000）
+ai-qa:
+  base-url: ${AI_QA_BASE_URL:http://127.0.0.1:8000}
+
 # JWT配置
 jwt:
   # JWT签名密钥

@@ -4,7 +4,7 @@
 # 功能：
 # 1. 打包后端项目并复制 war 包到 docker/backend
 # 2. 打包前端项目并复制 dist 目录到 docker/frontend
-# 3. 启动 docker-compose 进行部署
+# 3. docker-compose：仅 build ai-qa 镜像；up 不删 volume，数据库记录可保留
 
 set -e  # 遇到错误立即退出
 
@@ -124,13 +124,17 @@ echo -e "${GREEN}✓ 配置检查完成${NC}"
 echo -e "${YELLOW}[5/5] 启动 Docker 容器...${NC}"
 cd "$DOCKER_DIR"
 
-# 停止并删除旧容器和volumes（如果存在）
+# 停止并删除旧容器（保留 volumes，避免 MySQL/Redis 数据每次被清空）
+# 若需彻底清空库：手动执行 docker-compose down -v
 echo "停止现有容器..."
-docker-compose down -v 2>/dev/null || true
+docker-compose down 2>/dev/null || true
 
-# 启动容器
-echo "启动容器..."
-docker-compose up -d --build
+# 仅重新构建 ai-qa 镜像；其余服务用已有镜像，仅 up 时按卷挂载更新 war/dist
+echo "构建镜像: ai-qa ..."
+docker-compose build ai-qa
+
+echo "启动全部容器..."
+docker-compose up -d
 
 # 等待MySQL容器启动并完成初始化
 echo "等待MySQL容器启动并完成数据库初始化..."
