@@ -148,19 +148,58 @@ def _detect_area_flag(text: str) -> bool:
 
 
 def _detect_annual_report_download_intent(text: str) -> bool:
-    """识别“年度报告导出/下载（PDF/Word）”意图，用于强制注入导出接口。"""
+    """
+    识别「要拿报告类文件」意图，用于强制注入 exportReport。
+    以「下载」为主触发词；无「下载」时仅「导出」须同时带报告/年报等语义，避免误伤其它导出。
+    """
     if not text:
         return False
     t = str(text).lower()
-    has_report = ("年度报告" in t) or ("年报" in t) or ("年度" in t and "报告" in t)
-    has_download = ("下载" in t) or ("导出" in t) or ("导出报告" in t) or ("下载链接" in t) or ("链接" in t)
-    wants_file = ("pdf" in t) or ("word" in t) or ("docx" in t) or ("文件" in t) or ("报告" in t and ("下载" in t or "导出" in t))
-    return has_report and (has_download or wants_file)
+
+    # 与年度报告导出相关的主题词（与「下载」组合使用）
+    report_topic = (
+        ("报告" in t)
+        or ("年报" in t)
+        or ("年度报告" in t)
+        or ("碳排放报告" in t)
+        or ("排放报告" in t)
+        or ("温室气体报告" in t)
+        or ("温室气体" in t and "报告" in t)
+        or ("年度" in t and "报告" in t)
+        or ("pdf" in t)
+        or ("word" in t)
+        or ("docx" in t)
+    )
+
+    has_download = "下载" in t
+    has_export = "导出" in t
+    if not has_download and not has_export:
+        return False
+
+    # 重点：出现「下载」且语境像报告/年报/pdf/word 等，即注入导出接口
+    if has_download:
+        return report_topic
+
+    # 仅有「导出」：要求带报告类主题，避免「导出数据/导出表格」等走下载说明
+    return has_export and report_topic
 
 
 def _clean_params(params: Dict[str, Any]) -> Dict[str, Any]:
     """去掉 None / 空字符串入参，避免后端解析异常。"""
     return {k: v for k, v in params.items() if v is not None and v != ""}
+
+
+def _public_api_base_for_links() -> str:
+    """拼给前端/用户点击的 API 基址，补全 https://（compose 里常写成 host/path 无协议）。"""
+    raw = (getattr(settings, "PUBLIC_BACKEND_BASE_URL", None) or "").strip()
+    if not raw:
+        raw = (settings.BACKEND_BASE_URL or "").strip()
+    raw = raw.rstrip("/")
+    if not raw:
+        return ""
+    if not (raw.startswith("http://") or raw.startswith("https://")):
+        raw = "https://" + raw.lstrip("/")
+    return raw
 
 
 def _fetch_endpoint_data(
@@ -353,7 +392,7 @@ def _endpoint_catalog() -> List[Dict[str, str]]:
             "title": "【导出年度报告（文件下载）】",
             "path": "/carbonEmission/exportReport",
             "kind": "exportReportDownload",
-            "keywords": "导出 报告 下载 Word PDF docx pdf 年度报告 year format 导出报告文件",
+            "keywords": "导出 报告 下载 Word PDF docx pdf 年度报告 碳排放报告 排放报告 年报 year format 导出报告文件 下载链接",
         },
     ]
 
@@ -448,8 +487,8 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
     if (month is not None or month_range is not None) and not any(e["id"] == "emissionCategory" for e in selected):
         selected = [*selected, next(e for e in endpoint_catalog if e["id"] == "emissionCategory")]
 
-    # 当用户明确提出“年度报告 + 下载/导出/pdf/word”等意图时，把 exportReport 纳入候选
-    # （避免向量相似度把“报告下载”误判为“年度统计图表”）
+    # 当用户话里以「下载」为主且涉及报告/年报/pdf 等时，把 exportReport 纳入候选
+    # （避免向量相似度把“报告下载”误判为图表类接口）
     if _detect_annual_report_download_intent(question) and not any(e["id"] == "exportReport" for e in selected):
         selected = [*selected, next(e for e in endpoint_catalog if e["id"] == "exportReport")]
 
@@ -476,24 +515,27 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                 if endpoint["id"] == "exportReport":
                     actual_year = year if year is not None else "（为空则后端会使用实际年份）"
                     fmt = "pdf" if "pdf" in (question or "").lower() else "docx"
+                    pub = _public_api_base_for_links()
                     chunks.append(
                         "【导出年度报告（文件下载）】\n"
-                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        f"- 接口：GET {pub}{endpoint['path']}\n"
                         f"- 参数：year={actual_year}，format={fmt}（docx/pdf）\n"
                         "- 说明：该接口返回文件流（非JSON），适合浏览器下载。"
                     )
                     continue
                 if endpoint["id"] == "downloadCarbonEmissionTemplate":
+                    pub = _public_api_base_for_links()
                     chunks.append(
                         "【下载碳排放导入模板（文件下载）】\n"
-                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        f"- 接口：GET {pub}{endpoint['path']}\n"
                         "- 说明：该接口返回 .xlsx 文件流（非JSON）。"
                     )
                     continue
                 if endpoint["id"] == "exportTaskDownload":
+                    pub = _public_api_base_for_links()
                     chunks.append(
                         "【下载导出任务文件（文件下载）】\n"
-                        f"- 接口：GET {settings.PUBLIC_BACKEND_BASE_URL}{endpoint['path']}\n"
+                        f"- 接口：GET {pub}{endpoint['path']}\n"
                         "- 参数：taskId=导出任务ID\n"
                         "- 说明：该接口返回文件流（非JSON），任务需为 COMPLETED。"
                     )
