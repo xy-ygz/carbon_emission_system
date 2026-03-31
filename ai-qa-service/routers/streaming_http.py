@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from schemas.ask import AskRequest
-from services.qa_service import stream_answer_chunks
+from services.qa_service import stream_answer_events
 
 router = APIRouter(tags=["streaming-http"])
 
@@ -13,7 +13,7 @@ def ask_stream(request: AskRequest):
     if not question:
         raise HTTPException(status_code=400, detail="问题不能为空")
     return StreamingResponse(
-        stream_answer_chunks(question),
-        media_type="text/markdown; charset=utf-8",
+        stream_answer_events(question, request.session_id, request.user_id),
+        media_type="application/x-ndjson; charset=utf-8",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

@@ -1,13 +1,16 @@
 """
    simple_rag：
         预构建「已有碳排放数据接口」关键词 -> 接口调用路径映射，
+        提供问题拆解、历史对话、检索内容、候选业务接口（目录检索）等思维过程，
         基于用户输入问题，向量检索topK最相关接口，获取相关碳排放数据，并格式化成chunks
         送模型 context 实现 RAG
 """
 
+import json
 import logging
 import os
 import re
+import time
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse, urlunparse
 
@@ -206,10 +209,14 @@ def _fetch_endpoint_data(
     client: httpx.Client,
     endpoint_path: str,
     params: Dict[str, Any],
-) -> Optional[Any]:
-    """调用单个后端 GET 接口并返回 data。"""
+) -> Tuple[Optional[Any], str, Optional[str]]:
+    """调用单个后端 GET 接口并返回 (data, status, detail)。"""
     url = f"{settings.BACKEND_BASE_URL}{endpoint_path}"
-    resp = client.get(url, params=params)
+    try:
+        resp = client.get(url, params=params)
+    except Exception as e:
+        logger.warning("[RAG] endpoint_exception path=%s params=%s err=%s", endpoint_path, params, str(e))
+        return None, "exception", str(e)
     if resp.status_code != 200:
         logger.warning(
             "[RAG] endpoint_non_200 path=%s params=%s status=%s",
@@ -217,8 +224,12 @@ def _fetch_endpoint_data(
             params,
             resp.status_code,
         )
-        return None
-    body = resp.json()
+        return None, "http_non_200", f"status={resp.status_code}"
+    try:
+        body = resp.json()
+    except Exception:
+        logger.warning("[RAG] endpoint_invalid_json path=%s params=%s", endpoint_path, params)
+        return None, "invalid_json", None
     if body.get("code") != 200:
         logger.warning(
             "[RAG] endpoint_code_not_200 path=%s params=%s code=%s msg=%s",
@@ -227,9 +238,99 @@ def _fetch_endpoint_data(
             body.get("code"),
             body.get("msg") or body.get("message"),
         )
-        return None
+        return None, "code_not_200", str(body.get("msg") or body.get("message") or "")
     logger.info("[RAG] endpoint_success path=%s params=%s", endpoint_path, params)
-    return body.get("data")
+    return body.get("data"), "ok", None
+
+
+def _format_trace_markdown(trace: Dict[str, Any]) -> str:
+    """将 RAG 的真实执行轨迹格式化为前端可展示的“思维过程”Markdown。"""
+    if not trace:
+        return ""
+
+    q = trace.get("question") or ""
+    parsed = trace.get("parsed") or {}
+    selected = trace.get("selected_endpoints") or []
+    calls = trace.get("calls") or []
+    chunks_count = trace.get("chunks_count")
+    chunks_preview = trace.get("chunks_preview") or []
+
+    def _fmt(v: Any) -> str:
+        if v is None or v == "":
+            return "（未识别）"
+        return str(v)
+
+    lines: List[str] = []
+    lines.append("**执行摘要已生成**")
+    if q:
+        lines.append("")
+        lines.append(f"问题：**{q}**")
+
+    lines.append("")
+    lines.append("**1. 问题拆解（从问题中抽取的口径/范围）**")
+    lines.append("")
+    lines.append(
+        "- "
+        + "；".join(
+            [
+                f"年份：{_fmt(parsed.get('year'))}",
+                f"年份区间：{_fmt(parsed.get('year_range'))}",
+                f"月份：{_fmt(parsed.get('month'))}",
+                f"月份区间：{_fmt(parsed.get('month_range'))}",
+                f"是否地均口径：{_fmt(parsed.get('area_flag'))}",
+            ]
+        )
+    )
+
+    lines.append("")
+    lines.append("**2. 检索到的系统数据（RAG 召回结果）**")
+    lines.append("")
+    if chunks_preview:
+        for idx, it in enumerate(chunks_preview, start=1):
+            title = (it.get("title") or "").strip()
+            preview = (it.get("preview") or "").strip()
+            lines.append(f"{idx}. **{title or f'系统数据片段 {idx}'}**")
+            if preview:
+                lines.append("")
+                lines.append("> " + preview.replace("\n", "\n> "))
+                lines.append("")
+    else:
+        if selected:
+            lines.append("- 本次召回的候选数据接口：")
+            for e in selected:
+                eid = e.get("id") or ""
+                path = e.get("path") or ""
+                lines.append(f"  - `{eid}` `{path}`")
+        else:
+            lines.append("- 未召回到可用的系统数据片段。")
+
+    lines.append("")
+    lines.append("**3. 执行轨迹（用于核验）**")
+    lines.append("")
+    if calls:
+        for c in calls:
+            eid = c.get("id") or ""
+            path = c.get("path") or ""
+            params = c.get("params") or {}
+            status = c.get("status") or "unknown"
+            ms = c.get("elapsed_ms")
+            detail = c.get("detail")
+            suffix = []
+            if isinstance(ms, (int, float)):
+                suffix.append(f"{int(ms)}ms")
+            suffix.append(status)
+            if detail:
+                suffix.append(str(detail)[:200])
+            lines.append(f"- `{eid}` `{path}`：{' / '.join(suffix)}")
+            if params:
+                lines.append(f"  - params：`{json.dumps(params, ensure_ascii=False)}`")
+    else:
+        lines.append("- （无调用记录）")
+
+    if isinstance(chunks_count, int):
+        lines.append("")
+        lines.append(f"**RAG 上下文片段数**：{chunks_count}")
+    return "\n".join(lines).strip()
 
 
 def _format_endpoint_chunk(endpoint_title: str, data: Any, endpoint_kind: str) -> Optional[str]:
@@ -394,7 +495,39 @@ def _endpoint_catalog() -> List[Dict[str, str]]:
             "kind": "exportReportDownload",
             "keywords": "导出 报告 下载 Word PDF docx pdf 年度报告 碳排放报告 排放报告 年报 year format 导出报告文件 下载链接",
         },
+        {
+            "id": "downloadCarbonEmissionTemplate",
+            "title": "【下载碳排放导入模板（文件下载）】",
+            "path": "/carbonEmission/downloadCarbonEmissionTemplate",
+            "kind": "downloadTemplate",
+            "keywords": "下载 模板 xlsx 导入模板 碳排放导入 批量导入 表格模板",
+        },
+        {
+            "id": "exportTaskDownload",
+            "title": "【下载导出任务文件（文件下载）】",
+            "path": "/carbonEmission/exportTaskDownload",
+            "kind": "exportTaskDownloadFile",
+            "keywords": "导出任务 任务ID taskId 下载导出文件 任务完成 下载文件",
+        },
     ]
+
+
+def _thinking_purpose_from_title(title: str) -> str:
+    """从接口名称生成思考步骤中接口调用意图描述"""
+    core = (title or "").replace("【", "").replace("】", "").strip()
+    if not core:
+        return "拉取碳排放系统业务数据"
+    return f"获得{core}"
+
+
+def _rag_call_label_for_endpoint(eid: str) -> Tuple[str, str]:
+    """获取接口调用意图描述"""
+    for e in _endpoint_catalog():
+        if e.get("id") == eid:
+            kind = (e.get("kind") or "").strip() or eid
+            purpose = _thinking_purpose_from_title(e.get("title") or "")
+            return kind, purpose
+    return eid, _thinking_purpose_from_title("")
 
 
 def embed_texts(texts: List[str], embedding_url: str) -> Optional[np.ndarray]:
@@ -444,9 +577,14 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return (a_norm @ b_norm.T).ravel()
 
 
-def _choose_endpoints(question: str, endpoint_catalog: List[Dict[str, str]], embedding_url: Optional[str]) -> List[Dict[str, str]]:
+def _choose_endpoints(
+    question: str,
+    endpoint_catalog: List[Dict[str, str]],
+    embedding_url: Optional[str],
+    top_k: Optional[int] = None,
+) -> List[Dict[str, str]]:
     """根据接口关键词相似度选出最相关的接口（默认 topK=VECTOR_TOP_K，默认值见配置）。"""
-    k = settings.VECTOR_TOP_K if isinstance(getattr(settings, "VECTOR_TOP_K", None), int) else 3
+    k = top_k if isinstance(top_k, int) else (settings.VECTOR_TOP_K if isinstance(getattr(settings, "VECTOR_TOP_K", None), int) else 3)
     k = 3 if k <= 0 else k
     take_n = min(k, len(endpoint_catalog)) if endpoint_catalog else 0
     selected = endpoint_catalog[:take_n] if take_n > 0 else []
@@ -469,7 +607,12 @@ def _choose_endpoints(question: str, endpoint_catalog: List[Dict[str, str]], emb
     return selected
 
 
-def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[str]:
+def fetch_dynamic_chunks(
+    question: str,
+    embedding_url: Optional[str],
+    trace: Optional[Dict[str, Any]] = None,
+    top_k: Optional[int] = None,
+) -> List[str]:
     """动态调用最相关后端接口并把结果拼成候选 chunks。"""
     chunks: List[str] = []
 
@@ -480,7 +623,7 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
     area_flag = _detect_area_flag(question)
 
     endpoint_catalog = _endpoint_catalog()
-    selected = _choose_endpoints(question, endpoint_catalog, embedding_url=embedding_url)
+    selected = _choose_endpoints(question, endpoint_catalog, embedding_url=embedding_url, top_k=top_k)
 
     # 当用户明确提出“月度/月份区间”问题时，强制把 emissionCategory 纳入候选接口
     # （否则只靠接口关键词相似度，可能漏掉唯一的月度分解入口）
@@ -491,6 +634,20 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
     # （避免向量相似度把“报告下载”误判为图表类接口）
     if _detect_annual_report_download_intent(question) and not any(e["id"] == "exportReport" for e in selected):
         selected = [*selected, next(e for e in endpoint_catalog if e["id"] == "exportReport")]
+
+    if trace is not None:
+        trace["embedding_used"] = bool(embedding_url)
+        trace["question"] = question
+        trace["parsed"] = {
+            "year_range": year_range,
+            "year": year,
+            "month_range": month_range,
+            "month": month,
+            "area_flag": area_flag,
+        }
+        trace["selected_endpoints"] = [{"id": e.get("id"), "path": e.get("path")} for e in selected]
+        trace["calls"] = []
+        trace["chunks_preview"] = []
 
     logger.info(
         "[RAG] question=%s year_range=%s year=%s month_range=%s month=%s area_flag=%s",
@@ -522,6 +679,17 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                         f"- 参数：year={actual_year}，format={fmt}（docx/pdf）\n"
                         "- 说明：该接口返回文件流（非JSON），适合浏览器下载。"
                     )
+                    if trace is not None:
+                        trace["calls"].append(
+                            {
+                                "id": endpoint.get("id"),
+                                "path": endpoint.get("path"),
+                                "params": {"year": actual_year, "format": fmt},
+                                "status": "skipped_binary_download",
+                                "elapsed_ms": 0,
+                                "detail": "文件流接口不在 RAG 内直接请求",
+                            }
+                        )
                     continue
                 if endpoint["id"] == "downloadCarbonEmissionTemplate":
                     pub = _public_api_base_for_links()
@@ -530,6 +698,17 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                         f"- 接口：GET {pub}{endpoint['path']}\n"
                         "- 说明：该接口返回 .xlsx 文件流（非JSON）。"
                     )
+                    if trace is not None:
+                        trace["calls"].append(
+                            {
+                                "id": endpoint.get("id"),
+                                "path": endpoint.get("path"),
+                                "params": {},
+                                "status": "skipped_binary_download",
+                                "elapsed_ms": 0,
+                                "detail": "文件流接口不在 RAG 内直接请求",
+                            }
+                        )
                     continue
                 if endpoint["id"] == "exportTaskDownload":
                     pub = _public_api_base_for_links()
@@ -539,6 +718,17 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                         "- 参数：taskId=导出任务ID\n"
                         "- 说明：该接口返回文件流（非JSON），任务需为 COMPLETED。"
                     )
+                    if trace is not None:
+                        trace["calls"].append(
+                            {
+                                "id": endpoint.get("id"),
+                                "path": endpoint.get("path"),
+                                "params": {"taskId": "（未从问题中解析）"},
+                                "status": "skipped_binary_download",
+                                "elapsed_ms": 0,
+                                "detail": "文件流接口不在 RAG 内直接请求",
+                            }
+                        )
                     continue
 
                 if endpoint["id"] in {"collegeCarbonEmission", "mulberryDiagram", "listSpeciesConsumptionCount", "listSpeciesCarbon"}:
@@ -592,11 +782,24 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                     endpoint.get("path"),
                     params,
                 )
-                data = _fetch_endpoint_data(
+                t0 = time.time()
+                data, status, detail = _fetch_endpoint_data(
                     client=client,
                     endpoint_path=endpoint["path"],
                     params=params,
                 )
+                elapsed_ms = (time.time() - t0) * 1000.0
+                if trace is not None:
+                    trace["calls"].append(
+                        {
+                            "id": endpoint.get("id"),
+                            "path": endpoint.get("path"),
+                            "params": params,
+                            "status": status if data is not None else (status or "no_data"),
+                            "elapsed_ms": elapsed_ms,
+                            "detail": detail,
+                        }
+                    )
                 if data is None:
                     continue
 
@@ -607,28 +810,190 @@ def fetch_dynamic_chunks(question: str, embedding_url: Optional[str]) -> List[st
                 )
                 if chunk:
                     chunks.append(chunk)
+                    if trace is not None and isinstance(trace.get("chunks_preview"), list):
+                        # 只保留前 3 个片段预览，避免摘要过长
+                        if len(trace["chunks_preview"]) < 3:
+                            preview_lines = [ln.strip() for ln in str(chunk).splitlines() if ln.strip()]
+                            preview = "\n".join(preview_lines[:8])
+                            trace["chunks_preview"].append(
+                                {
+                                    "title": str(endpoint.get("title") or endpoint.get("id") or "系统数据片段"),
+                                    "preview": preview,
+                                }
+                            )
     except Exception as e:
         logger.warning("动态拉取并拼接失败: %s", e)
 
     return chunks
 
 
-def get_relevant_context(question: str, top_k: Optional[int] = None, embedding_url: Optional[str] = None) -> str:
-    """拼装 RAG context：优先依赖接口选择（fetch_dynamic_chunks），不再对 chunks 做额外精排。"""
+def _rag_call_status_zh(status: str) -> str:
+    mapping = {
+        "ok": "成功返回业务数据",
+        "exception": "请求异常",
+        "http_non_200": "HTTP 非 200",
+        "invalid_json": "响应非 JSON",
+        "code_not_200": "业务 code 非 200",
+        "no_data": "无有效数据或未写入上下文",
+        "skipped_binary_download": "已生成接口说明（文件流接口不在 RAG 内直连）",
+    }
+    return mapping.get(status, status or "未知")
 
-    # 如果调用方没有传 embedding_url，则按配置自动创建
+
+def build_thinking_steps_from_rag_trace(trace: Dict[str, Any]) -> List[Dict[str, str]]:
+    """根据 RAG 真实 trace（含 calls）生成前端「思考步骤」列表。"""
+    steps: List[Dict[str, str]] = []
+    if trace.get("embedding_used"):
+        steps.append(
+            {
+                "title": "调用 `embed_texts`（向量化）",
+                "detail": (
+                    f"使用嵌入模型 `{settings.EMBEDDING_MODEL}`，将用户问题与接口目录关键词做相似度匹配，"
+                    f"选出与问题最相关的业务接口后再请求后端。"
+                ),
+            }
+        )
+    calls = trace.get("calls") or []
+    if not calls and not trace.get("embedding_used"):
+        steps.append(
+            {
+                "title": "检索业务接口（未走向量）",
+                "detail": "当前未启用嵌入或缺少密钥，已按默认策略选取少量候选接口并尝试拉取数据。",
+            }
+        )
+    for c in calls:
+        eid = (c.get("id") or "").strip() or "unknown"
+        fn, purpose = _rag_call_label_for_endpoint(eid)
+        params = c.get("params") if isinstance(c.get("params"), dict) else {}
+        status = (c.get("status") or "").strip()
+        ms = c.get("elapsed_ms")
+        detail = c.get("detail")
+
+        parts: List[str] = [
+            f"用途：{purpose}。",
+        ]
+        if params:
+            parts.append(f"参数：`{json.dumps(_clean_params(params), ensure_ascii=False)}`。")
+        status_line = _rag_call_status_zh(status)
+        if isinstance(ms, (int, float)):
+            parts.append(f"状态：{status_line}（约 {int(ms)} ms）。")
+        else:
+            parts.append(f"状态：{status_line}。")
+        if detail and str(detail).strip() and status != "ok":
+            parts.append(f"备注：{str(detail)[:300]}。")
+
+        steps.append({"title": f"调用 `{fn}`", "detail": "".join(parts)})
+    return steps
+
+
+def _thinking_parsed_detail(parsed: Any) -> str:
+    """从 trace['parsed'] 生成「问题拆解」步骤文案（与 fetch_dynamic_chunks 所用解析函数一致）。"""
+    if not isinstance(parsed, dict) or not parsed:
+        return "（暂无结构化解析结果）"
+
+    def _fmt(v: Any) -> str:
+        if v is None or v == "":
+            return "（未识别）"
+        return str(v)
+
+    return (
+        f"年份：{_fmt(parsed.get('year'))}；"
+        f"年份区间：{_fmt(parsed.get('year_range'))}；"
+        f"月份：{_fmt(parsed.get('month'))}；"
+        f"月份区间：{_fmt(parsed.get('month_range'))}；"
+        f"是否地均口径：{_fmt(parsed.get('area_flag'))}。"
+    )
+
+
+def _thinking_selected_endpoints_detail(trace: Dict[str, Any]) -> str:
+    """结合 `_endpoint_catalog()` 展示候选接口 id、标题与路径。"""
+    selected = trace.get("selected_endpoints") or []
+    if not selected:
+        return "（未选出候选接口）"
+    id_to_title = {e.get("id"): (e.get("title") or "").strip() for e in _endpoint_catalog()}
+    lines: List[str] = []
+    for idx, se in enumerate(selected, start=1):
+        eid = (se.get("id") or "").strip() or "unknown"
+        path = (se.get("path") or "").strip()
+        title = (id_to_title.get(eid) or eid).strip()
+        lines.append(f"{idx}. {title} `{eid}` → `{path}`")
+    return "\n".join(lines)
+
+
+def _thinking_retrieval_detail(trace: Dict[str, Any]) -> str:
+    """检索得到的上下文条数与片段预览数量。"""
+    n = trace.get("chunks_count")
+    previews = trace.get("chunks_preview") or []
+    parts: List[str] = []
+    if isinstance(n, int):
+        parts.append(f"本次共拼装 {n} 条系统数据上下文（chunk）供模型引用。")
+    else:
+        parts.append("（未统计上下文条数）。")
+    return "".join(parts)
+
+
+def _thinking_history_detail(history_round_count: int) -> str:
+    """已载入提示词的历史对话轮数。"""
+    if history_round_count <= 0:
+        return "本次未附带历史对话（首轮提问或暂无会话记录）。"
+    return (
+        f"提示词中已载入最近 {history_round_count} 轮历史问答（同一会话内），"
+        "用于多轮上下文理解。"
+    )
+
+
+def build_thinking_payload_from_trace(
+    trace: Dict[str, Any],
+    history_round_count: int,
+) -> Dict[str, Any]:
+    """组装前端 parseThinkingPayload 所需的 JSON 对象（含 steps：title/detail 列表）。"""
+    parsed = trace.get("parsed") if isinstance(trace.get("parsed"), dict) else {}
+    steps: List[Dict[str, str]] = [
+        {"title": "问题拆解", "detail": _thinking_parsed_detail(parsed)},
+        {"title": "历史对话记忆", "detail": _thinking_history_detail(history_round_count)},
+        {"title": "候选业务接口（目录检索）", "detail": _thinking_selected_endpoints_detail(trace)},
+    ]
+    steps.extend(build_thinking_steps_from_rag_trace(trace))
+    steps.append({"title": "检索拼装结果", "detail": _thinking_retrieval_detail(trace)})
+    return {"steps": steps}
+
+
+def get_relevant_context_with_trace(
+    question: str,
+    top_k: Optional[int] = None,
+    embedding_url: Optional[str] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    """返回 (context, rag_trace)。rag_trace 含真实后端调用记录，供思考过程展示。"""
     if embedding_url is None and settings.EMBEDDING_ENABLED and settings.LLM_API_KEY:
         embedding_url = _embedding_endpoint()
 
-    # 得到与 用户问题 最相关的 topK 系统数据接口，将接口返回数据格式化成 chunks
-    # 若 embeddings 仍不可用，则直接返回全部 chunks（保持“轻量兜底”）
+    trace: Dict[str, Any] = {}
     if embedding_url is None:
-        chunks = fetch_dynamic_chunks(question=question, embedding_url=None)
-        return "\n\n".join(chunks)
+        chunks = fetch_dynamic_chunks(question=question, embedding_url=None, trace=trace, top_k=top_k)
+        trace["chunks_count"] = len(chunks)
+        return "\n\n".join(chunks), trace
 
-    chunks = fetch_dynamic_chunks(question=question, embedding_url=embedding_url)
+    chunks = fetch_dynamic_chunks(question=question, embedding_url=embedding_url, trace=trace, top_k=top_k)
+    trace["chunks_count"] = len(chunks)
     if not chunks:
-        return "当前系统暂无可用的业务数据。"
-    # chunks 已来自与问题相关的接口候选；当前数据量很少时，直接拼接即可保证召回覆盖
-    return "\n\n".join(chunks)
+        return "当前系统暂无可用的业务数据。", trace
+    return "\n\n".join(chunks), trace
+
+
+def get_relevant_context_and_trace(
+    question: str,
+    top_k: Optional[int] = None,
+    embedding_url: Optional[str] = None,
+) -> Tuple[str, str]:
+    """返回 (context, trace_markdown)。trace 为真实执行轨迹摘要，便于前端展示。"""
+    context, trace = get_relevant_context_with_trace(
+        question, top_k=top_k, embedding_url=embedding_url
+    )
+    return context, _format_trace_markdown(trace)
+
+
+def get_relevant_context(question: str, top_k: Optional[int] = None, embedding_url: Optional[str] = None) -> str:
+    """拼装 RAG context：优先依赖接口选择（fetch_dynamic_chunks），不再对 chunks 做额外精排。"""
+    ctx, _ = get_relevant_context_with_trace(question, top_k=top_k, embedding_url=embedding_url)
+    return ctx
 

@@ -11,8 +11,10 @@ def ask(request: AskRequest) -> AskResponse:
     question = request.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="问题不能为空")
-    code, data, message = answer_question_sync(question)
-    return AskResponse(code=code, data=data, message=message)
+    code, data, message, session_id, thinking = answer_question_sync(
+        question, request.session_id, request.user_id
+    )
+    return AskResponse(code=code, data=data, message=message, session_id=session_id, thinking=thinking)
 
 
 @router.get("/health")
