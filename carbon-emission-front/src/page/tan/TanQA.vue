@@ -123,7 +123,8 @@ export default {
       inputText: '',
       loading: false,
       messages: [],
-      sessionId: ''
+      sessionId: '',
+      storageUserKey: ''
     };
   },
   created() {
@@ -131,9 +132,20 @@ export default {
     this.restoreSession();
   },
   methods: {
+    getCurrentUserKey() {
+      // 前端 sessionStorage 隔离
+      try {
+        const id = window.localStorage && window.localStorage.getItem('id');
+        const uid = id && String(id).trim() ? String(id).trim() : '';
+        return uid ? `u:${uid}` : 'u:anonymous';
+      } catch (e) {
+        return 'u:anonymous';
+      }
+    },
     getStorageKey() {
       const tabId = window.sessionStorage.getItem(QA_TAB_ID_KEY) || '';
-      return `${QA_STORAGE_PREFIX}${tabId}`;
+      const userKey = this.storageUserKey || this.getCurrentUserKey();
+      return `${QA_STORAGE_PREFIX}${tabId}__${userKey}`;
     },
     ensureTabIsolation() {
       try {
@@ -143,6 +155,14 @@ export default {
           window.sessionStorage.setItem(QA_TAB_ID_KEY, tabId);
         }
       } catch (e) {}
+
+      // 记录创建时的用户 key
+      const currentUserKey = this.getCurrentUserKey();
+      if (!this.storageUserKey) this.storageUserKey = currentUserKey;
+      if (this.storageUserKey !== currentUserKey) {
+        this.handleClear();
+        this.storageUserKey = currentUserKey;
+      }
     },
     renderMarkdown(raw) {
       if (!raw) return '';
@@ -258,18 +278,35 @@ export default {
     },
     persistSession() {
       try {
+        // 若用户已切换，更新用户 key
+        const currentUserKey = this.getCurrentUserKey();
+        if (!this.storageUserKey) this.storageUserKey = currentUserKey;
+        if (this.storageUserKey !== currentUserKey) {
+          this.handleClear();
+          this.storageUserKey = currentUserKey;
+        }
+
         const now = Date.now();
         if (this._persistThrottleUntil && now < this._persistThrottleUntil) return;
         this._persistThrottleUntil = now + 120;
         const payload = {
           sessionId: this.sessionId || '',
-          messages: this.messages
+          messages: this.messages,
+          storageUserKey: this.storageUserKey
         };
         window.sessionStorage.setItem(this.getStorageKey(), JSON.stringify(payload));
       } catch (e) {}
     },
     restoreSession() {
       try {
+        const currentUserKey = this.getCurrentUserKey();
+        if (!this.storageUserKey) this.storageUserKey = currentUserKey;
+        if (this.storageUserKey !== currentUserKey) {
+          this.handleClear();
+          this.storageUserKey = currentUserKey;
+          return;
+        }
+
         const raw = window.sessionStorage.getItem(this.getStorageKey());
         if (!raw) return;
         const data = JSON.parse(raw);
